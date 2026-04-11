@@ -54,17 +54,17 @@
 				</li>
 				<li class="nav-item" uib-dropdown>
 					<a class="nav-link dropdown-toggle" data-toggle="dropdown">
-						<b>Version: {{$root.version}}</b>
+						<b ng-bind="'Version: ' + ($root.versionLabel || $root.version)"></b>
 					</a>
 					<div class="dropdown-menu dropdown-menu-right">
-						<a class="dropdown-item" ng-class="{'active': $root.version == '0.8'}" ng-click="$root.changeVersion('0.8')">
-							0.8
+						<a class="dropdown-item" ng-class="{'active': $root.version == '1.1'}" ng-click="$root.changeVersion('1.1')">
+							1.1
 						</a>
-						<a class="dropdown-item" ng-class="{'active': $root.version == '1.0'}" ng-click="$root.changeVersion('1.0')">
-							1.0
+						<a class="dropdown-item" ng-class="{'active': $root.version == '1.1-ficsmas'}" ng-click="$root.changeVersion('1.1-ficsmas')">
+							1.1 (Ficsmas)
 						</a>
-						<a class="dropdown-item" ng-class="{'active': $root.version == '1.0-ficsmas'}" ng-click="$root.changeVersion('1.0-ficsmas')">
-							1.0 (Ficsmas)
+						<a class="dropdown-item" ng-class="{'active': $root.version == '1.2'}" ng-click="$root.changeVersion('1.2')">
+							1.2
 						</a>
 					</div>
 				</li>
@@ -108,11 +108,6 @@
 		</div>
 	</div>
 
-	<!--<div class="alert alert-danger alert-dismissible fade show" ng-if="$root.version == '1.0'">
-		<b>Looking for FICSMAS production?</b> Change your version in top right corner! Merry FICSMAS!
-		<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-	</div>-->
-
 	<div ui-view></div>
 
 	<hr>
@@ -126,24 +121,3 @@
 		</p>
 	</footer>
 </div>
-
-<div class="modal" tabindex="-1" ng-if="version === '0.8'" id="modal">
-	<div class="modal-dialog modal-dialog-centered">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3 class="modal-title">Old version!</h3>
-			</div>
-			<div class="modal-body">
-				<p class="alert alert-danger">
-					<b>You're looking at Tools for Update 8!</b> If you want to calculate builds for full release (1.0), use the button below to switch.<br>
-					You can use the export/import functionality to move production lines to 1.0 Tools.
-				</p>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-danger" data-dismiss="modal">Stay on 0.8 Tools</button>
-				<a ng-click="changeVersion('1.0')" class="btn btn-success">Go to 1.0 Tools</a>
-			</div>
-		</div>
-	</div>
-</div>
-

@@ -40,6 +40,8 @@ import {DataProvider} from '@src/Data/DataProvider';
 
 export class AppModule
 {
+	private static readonly DEFAULT_VERSION = '1.1';
+	private static readonly SUPPORTED_VERSIONS = ['1.1', '1.1-ficsmas', '1.2'];
 
 
 	public constructor(private readonly app: IModule)
@@ -95,7 +97,7 @@ export class AppModule
 					},
 					onEnter: ['$stateParams', '$state$', ($stateParams: StateParams, $state$: IAppState) => {
 						$state$.ncyBreadcrumb = $state$.ncyBreadcrumb || {};
-						$state$.ncyBreadcrumb.label = 'Game version: ' + $stateParams.version;
+						$state$.ncyBreadcrumb.label = 'Game version: ' + AppModule.getVersionLabel(AppModule.normalizeVersion($stateParams.version));
 					}],
 				},
 				{
@@ -350,32 +352,29 @@ export class AppModule
 			$rootScope.aprilMode = April.isApril();
 			$rootScope.aprilModePossible = April.isAprilPossible();
 
-			const path = document.location.pathname;
-			let v = '0.8';
-			if (path.indexOf('/1.0-ficsmas') !== -1) {
-				v = '1.0-ficsmas';
-			} else if (path === '/' || path.indexOf('/1.0') !== -1) {
-				v = '1.0';
-			}
+			const path = document.location.pathname.split('/').filter((part) => !!part);
+			const v = AppModule.normalizeVersion(path[0]);
 			$rootScope.version = v;
+			$rootScope.versionLabel = AppModule.getVersionLabel(v);
 			DataProvider.change(v);
 
 			$rootScope.changeVersion = (ver: string) => {
-				document.location.href = document.location.href.replace($rootScope.version, ver);
+				const nextVersion = AppModule.normalizeVersion(ver);
+				if (nextVersion === $rootScope.version) {
+					return;
+				}
+
+				$state.go($state.current.name || 'home', {...$state.params, version: nextVersion}, {location: 'replace', reload: true, inherit: true});
 			};
 
 			$transitions.onStart({}, (transition: ITransitionObject<{version: string, share?: string}>) => {
 				const version = transition.params().version;
-				const valid = ['0.8', '1.0', '1.0-ficsmas'];
+				const valid = AppModule.SUPPORTED_VERSIONS;
+				const normalizedVersion = AppModule.normalizeVersion(version);
 
-				let defaultVersion = '0.8';
-				if (transition.to().name === 'home') {
-					defaultVersion = '1.0';
-				}
-
-				if (!valid.includes(version)) {
+				if (!valid.includes(version) || version !== normalizedVersion) {
 					transition.abort();
-					$state.go(transition.to().name + '', {...transition.params(), version: defaultVersion}, {location: 'replace', reload: true, inherit: true});
+					$state.go(transition.to().name + '', {...transition.params(), version: normalizedVersion}, {location: 'replace', reload: true, inherit: true});
 				}
 			})
 
@@ -387,17 +386,12 @@ export class AppModule
 					}
 				}
 				setTimeout(() => {
-					$rootScope.version = $state.params.version;
-					DataProvider.change($state.params.version);
+					$rootScope.version = AppModule.normalizeVersion($state.params.version);
+					$rootScope.versionLabel = AppModule.getVersionLabel($rootScope.version);
+					DataProvider.change($rootScope.version);
 				});
 			});
 
-			$timeout(() => {
-				$('#modal').modal({
-					backdrop: 'static',
-					keyboard: false,
-				});
-			})
 		}]);
 
 		this.app.filter('number', () => {
@@ -497,6 +491,32 @@ export class AppModule
 				return (Number(value)).toFixed(3).replace(/\.?0+$/, '');
 			}
 		};
+	}
+
+	private static normalizeVersion(version?: string): string
+	{
+		switch (version) {
+			case '1.0':
+				return '1.1';
+			case '1.0-ficsmas':
+				return '1.1-ficsmas';
+			case '1.1':
+			case '1.1-ficsmas':
+			case '1.2':
+				return version;
+			default:
+				return AppModule.DEFAULT_VERSION;
+		}
+	}
+
+	private static getVersionLabel(version: string): string
+	{
+		switch (version) {
+			case '1.1-ficsmas':
+				return '1.1 (Ficsmas)';
+			default:
+				return version;
+		}
 	}
 
 }

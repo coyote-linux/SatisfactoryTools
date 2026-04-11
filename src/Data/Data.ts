@@ -28,21 +28,7 @@ export class Data
 
 	public static get resourceAmounts()
 	{
-		return DataProvider.version === '0.8' ? {
-			Desc_OreIron_C: 70380,
-			Desc_OreCopper_C: 28860,
-			Desc_Stone_C: 52860,
-			Desc_Coal_C: 30120,
-			Desc_OreGold_C: 11040,
-			Desc_LiquidOil_C: 11700,
-			Desc_RawQuartz_C: 10500,
-			Desc_Sulfur_C: 6840,
-			Desc_OreBauxite_C: 9780,
-			Desc_OreUranium_C: 2100,
-			Desc_NitrogenGas_C: 12000,
-			Desc_SAM_C: 0,
-			Desc_Water_C: Number.MAX_SAFE_INTEGER,
-		} : {
+		return {
 			Desc_OreIron_C: 92100,
 			Desc_OreCopper_C: 36900,
 			Desc_Stone_C: 69900,
@@ -61,21 +47,7 @@ export class Data
 
 	public static get resourceWeights()
 	{
-		return DataProvider.version === '0.8' ? {
-			Desc_OreIron_C: 1,
-			Desc_OreCopper_C: 2.438669438669439,
-			Desc_Stone_C: 1.3314415437003406,
-			Desc_Coal_C: 2.277669902912621,
-			Desc_OreGold_C: 6.375,
-			Desc_LiquidOil_C: 6.015384615384615,
-			Desc_RawQuartz_C: 6.702857142857143,
-			Desc_Sulfur_C: 10.289473684210526,
-			Desc_OreBauxite_C: 7.196319018404908,
-			Desc_OreUranium_C: 33.51428571428572,
-			Desc_NitrogenGas_C: 5.865,
-			Desc_SAM_C: 10000,
-			Desc_Water_C: 0,
-		} : {
+		return {
 			Desc_OreIron_C: 1,
 			Desc_OreCopper_C: 2.4959349593495936,
 			Desc_Stone_C: 1.3175965665236051,
