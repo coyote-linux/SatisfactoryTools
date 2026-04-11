@@ -14,6 +14,14 @@ module.exports = {
 		new webpack.IgnorePlugin({
 			resourceRegExp: /(fs|child_process)/
 		}),
+		new webpack.ProvidePlugin({
+			$: 'jquery',
+			jQuery: 'jquery',
+			'window.$': 'jquery',
+			'window.jQuery': 'jquery',
+			angular: 'angular',
+			'window.angular': 'angular',
+		}),
 		new ESLintPlugin({
 			extensions: ['ts', 'tsx'],
 			eslintPath: require.resolve('eslint'),
@@ -22,7 +30,7 @@ module.exports = {
 	],
 	resolve: {
 		plugins: [
-			new TsconfigPathsPlugin,
+			new TsconfigPathsPlugin(),
 		],
 		extensions: ['.ts', '.tsx', '.js'],
 	},
@@ -35,15 +43,11 @@ module.exports = {
 						loader: 'ts-loader',
 					},
 				],
-				exclude: '/node_modules/',
+				exclude: /node_modules/,
 			},
 			{
 				test: /\.html$/,
-				use: [
-					{
-						loader: 'angular-templatecache-loader?module=app',
-					},
-				],
+				type: 'asset/source',
 			},
 			{
 				test: /\.css$/i,
@@ -51,7 +55,20 @@ module.exports = {
 			},
 			{
 				test: /\.scss$/,
-				use: ['style-loader', 'css-loader', 'sass-loader'],
+				use: [
+					'style-loader',
+					'css-loader',
+					{
+						loader: 'sass-loader',
+						options: {
+							implementation: require('sass'),
+							api: 'modern',
+							sassOptions: {
+								loadPaths: ['node_modules'],
+							},
+						},
+					},
+				],
 			},
 		],
 	},

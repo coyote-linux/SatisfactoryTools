@@ -4,6 +4,10 @@
 	"description": "A collection of Satisfactory tools",
 	"author": "greeny",
 	"private": true,
+	"packageManager": "yarn@1.22.22",
+	"engines": {
+		"node": ">=20"
+	},
 	"scripts": {
 		"build": "webpack --mode production",
 		"buildCI": "webpack --mode production",
@@ -28,13 +32,11 @@
 		"@types/sharp": "^0.29.4",
 		"@typescript-eslint/eslint-plugin": "^8.57.1",
 		"@typescript-eslint/parser": "^8.57.1",
-		"angular-templatecache-loader": "^0.2.0",
 		"css-loader": "^5.2.7",
 		"eslint": "^10.1.0",
 		"eslint-webpack-plugin": "^5.0.3",
 		"sass": "^1.98.0",
 		"sass-loader": "^13",
-		"script-loader": "^0.7.2",
 		"sharp": "^0.29.3",
 		"style-loader": "^2.0.0",
 		"terser-webpack-plugin": "^5",
@@ -63,6 +65,7 @@
 		"elkjs": "^0.7.1",
 		"file-saver": "^2.0.5",
 		"jquery": "^3.4.1",
+		"oh-my-openagent": "^3.16.0",
 		"pako": "^2.1.0",
 		"perfect-scrollbar": "^1.5.0",
 		"popper.js": "^1.16.1",
