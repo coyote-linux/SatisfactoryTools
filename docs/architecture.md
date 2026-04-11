@@ -21,7 +21,8 @@ At runtime the application loads a single generated bundle, `www/assets/app.js`,
 - `src/Module/` - AngularJS application wiring, controllers, services, directives, and components.
 - `src/Data/` - runtime dataset selection and data access helpers.
 - `src/Tools/Production/` - production planner request/result models and UI-side production logic.
-- `src/Solver/` - remote solver client.
+- `src/Solver/` - frontend solver client and browser-side solver URL selection.
+- `SolverService/` - local C# replacement solver service and tests.
 - `templates/` - HTML templates loaded directly into the bundle.
 - `styles/` - Sass and CSS entry styles.
 - `data/` - generated runtime datasets and parsing inputs.
@@ -65,10 +66,16 @@ These JSON files are imported into the webpack bundle at build time, so a normal
 
 - The planner entry controller is `src/Module/Controllers/ProductionController.ts`.
 - Planner state and transformations flow through `src/Tools/Production/*`.
-- Solving is not performed in this repository. `src/Solver/Solver.ts` posts planner requests to the remote API at `https://api.satisfactorytools.com/v2/solver`.
+- `src/Solver/Solver.ts` is the browser-side client that reads the configured solver URL and posts planner requests to `/v2/solver`.
+- `SolverService/SatisfactoryTools.Solver.Api` is the new local replacement solver service. It uses OR-Tools and consumes the same `data/data1.0*.json` assets as the frontend.
 - Shared planner imports also rely on the remote API namespace (`/v2/share/...`).
 
-For deployment, the frontend can run without a local solver service, but production-planner solving and share loading require outbound access to the hosted API.
+The planner is now split across two backends:
+
+- solving can be provided locally by the C# service
+- sharing still depends on the hosted `/v2/share/...` API
+
+For deployment, the frontend can run without the local solver service only if it still has access to a compatible external `/v2/solver` endpoint.
 
 ## Build and asset pipeline
 
@@ -77,6 +84,8 @@ For deployment, the frontend can run without a local solver service, but product
 - `yarn build` / `yarn buildCI` runs webpack in production mode.
 - Output is written to `www/assets/app.js`.
 - `yarn start` runs webpack in watch mode only; it does not serve HTTP traffic.
+- `dotnet test SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj` validates the local C# solver contract and sample solve behavior.
+- `dotnet run --project SolverService/SatisfactoryTools.Solver.Api/SatisfactoryTools.Solver.Api.csproj --urls=http://0.0.0.0:8080` starts the local solver API.
 
 ### Offline content generation
 
@@ -92,6 +101,7 @@ These scripts are content-maintenance tools, not part of the minimum runtime nee
 
 - Node.js 20+ for building the bundle.
 - Yarn 1.22.x (or `npx yarn@1.22.22 ...`).
+- .NET SDK 10 for the replacement solver service.
 - A PHP-capable web server because the entry document is `www/index.php`.
 - Apache rewrite support or equivalent front-controller fallback for HTML5 routes.
 
@@ -113,7 +123,9 @@ These scripts are content-maintenance tools, not part of the minimum runtime nee
 - Remote share API: `https://api.satisfactorytools.com/v2/share/...`
 - Matomo analytics script referenced from `www/index.php`
 
-If the deployment target blocks outbound network access, the production planner will load but solver-backed features will not work.
+In local development, `www/index.php` can inject a custom solver URL so the browser targets the local C# service instead of the hosted solver.
+
+If the deployment target blocks outbound network access, local solving can still work, but share loading/creation will not until `/v2/share/...` is also replaced.
 
 ## Recommended local testing model
 
@@ -124,7 +136,9 @@ For local testing, use one process to build the bundle and one PHP/Apache web se
 The repository includes a simple `docker-compose.yml` for local testing.
 
 - `builder` uses Node 24 and runs `yarn install` plus `yarn build` against the repository root.
+- `solver` uses the .NET 10 SDK image and runs the local C# `/v2/solver` service from `SolverService/`.
 - `web` uses the official `php:8.2-apache` image and serves `www/` directly from `/var/www/html`.
+- `web` injects `SOLVER_URL=http://localhost:8081/v2/solver` into `www/index.php`, so the browser targets the local solver service during Docker testing.
 - Apache reads the existing `www/.htaccess`, so HTML5 routes continue to fall back to `index.php`.
 
 Start the app with:

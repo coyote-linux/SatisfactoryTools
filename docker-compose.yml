@@ -11,10 +11,24 @@ services:
     image: php:8.2-apache
     depends_on:
       - builder
+      - solver
     ports:
       - '8080:80'
+    environment:
+      SOLVER_URL: http://localhost:8081/v2/solver
     volumes:
       - ./www:/var/www/html
     command: >
-      bash -lc "until [ -f /var/www/html/assets/app.js ]; do echo 'Waiting for webpack build...'; sleep 1; done; apache2-foreground"
+      bash -lc "a2enmod rewrite >/dev/null && until [ -f /var/www/html/assets/app.js ]; do echo 'Waiting for webpack build...'; sleep 1; done; apache2-foreground"
+    restart: unless-stopped
+
+  solver:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    ports:
+      - '8081:8080'
+    command: >
+      bash -lc "dotnet run --project SolverService/SatisfactoryTools.Solver.Api/SatisfactoryTools.Solver.Api.csproj --urls=http://0.0.0.0:8080"
     restart: unless-stopped
