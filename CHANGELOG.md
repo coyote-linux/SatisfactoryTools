@@ -28,3 +28,5 @@ All notable changes to this project will be documented in this file.
 - Documented the current runtime version boundary: the planner boot flow still recognizes `0.8`, `1.0`, and `1.0-ficsmas`, so Satisfactory v1.2 planner support remains pending.
 - Restored self-hosted production-planner solving for common cases without depending on the private upstream solver codebase.
 - Recipe cost multiplier changes now affect actual solve behavior instead of stopping at frontend state only.
+- Corrected production-graph ingredient flow labels so recipe cost multiplier changes now propagate into visualization edges and Items-tab consumption totals.
+- Corrected Items-tab producer totals so externally supplied inputs are counted in item production breakdowns.
