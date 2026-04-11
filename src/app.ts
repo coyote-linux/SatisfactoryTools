@@ -2,11 +2,10 @@ import '@src/../styles/bootstrap.scss';
 import '@src/../node_modules/ui-select/dist/select.css';
 import '@src/../styles/style.scss';
 
-import 'jquery/dist/jquery.min';
+import {angular} from '@src/Globals';
 import 'jquery-ui-dist/jquery-ui.min';
 import 'popper.js/dist/umd/popper.min';
 import 'bootstrap/dist/js/bootstrap.min';
-import * as angular from 'angular';
 import 'angular-sanitize/angular-sanitize.min';
 import 'angular-animate/angular-animate.min';
 import 'angular-ui-router/release/angular-ui-router.min';

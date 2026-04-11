@@ -2,6 +2,15 @@ import axios from 'axios';
 import {IProductionToolResponse} from '@src/Tools/Production/IProductionToolResponse';
 import {IProductionDataApiRequest} from '@src/Tools/Production/IProductionData';
 
+declare global
+{
+	interface Window {
+		SATISFACTORY_TOOLS_CONFIG?: {
+			solverUrl?: string;
+		};
+	}
+}
+
 export class Solver
 {
 
@@ -9,7 +18,7 @@ export class Solver
 	{
 		axios({
 			method: 'post',
-			url: 'https://api.satisfactorytools.com/v2/solver',
+			url: window.SATISFACTORY_TOOLS_CONFIG?.solverUrl || 'https://api.satisfactorytools.com/v2/solver',
 			data: productionRequest,
 		}).then((response) => {
 			if ('result' in response.data) {
