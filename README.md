@@ -2,8 +2,8 @@
 Satisfactory Tools for planning and building the perfect base.
 
 ## Requirements
-- node.js version 16 (lower may work, 17+ doesn't work)
-- yarn
+- node.js 20+
+- yarn 1.22 (`npx yarn@1.22.22 ...` also works if Yarn is not installed globally)
 - PHP 7.1+
 
 ## Installation
@@ -11,6 +11,8 @@ Satisfactory Tools for planning and building the perfect base.
 - `yarn install`
 - `yarn build`
 - Set up a virtual host pointing to `/www` directory (using e.g. Apache or ngnix)
+
+The current stack is verified in CI on Node 24 and was smoke-tested locally on Node 22.
 
 ## Contributing
 Any pull requests are welcome, though some rules must be followed:
