@@ -26,6 +26,8 @@ export interface IProductionDataRequest
 	blockedRecipes: string[]; // whether normal recipe can be used
 	blockedMachines?: string[]; // which machines are blocked
 	allowedAlternateRecipes: string[]; // whether alt is available or not (doesn't guarantee usage)
+	recipeCostMultiplier?: number;
+	powerConsumptionMultiplier?: number;
 
 	sinkableResources: string[]; // whether or not you can sink a given resource
 

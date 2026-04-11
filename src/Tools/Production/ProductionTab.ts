@@ -58,6 +58,13 @@ export class ProductionTab
 		if (typeof this.data.request.blockedMachines === 'undefined') {
 			this.data.request.blockedMachines = [];
 		}
+		if (typeof this.data.request.recipeCostMultiplier !== 'number') {
+			this.data.request.recipeCostMultiplier = 1;
+		}
+		if (typeof this.data.request.powerConsumptionMultiplier !== 'number') {
+			this.data.request.powerConsumptionMultiplier = 1;
+		}
+		this.data.metadata.gameVersion = this.version;
 
 		this.unregisterCallback = scope.$watch(() => {
 			return this.data.request;
@@ -95,10 +102,10 @@ export class ProductionTab
 
 		const calc = () => {
 			const apiRequest: IProductionDataApiRequest = angular.copy(this.data.request) as IProductionDataApiRequest;
+			apiRequest.recipeCostMultiplier = this.version === '1.2' ? apiRequest.recipeCostMultiplier : 1;
+			apiRequest.powerConsumptionMultiplier = this.version === '1.2' ? apiRequest.powerConsumptionMultiplier : 1;
 			switch (this.version) {
-				case '0.8':
-					apiRequest.gameVersion = '0.8.0';
-					break;
+				case '1.1-ficsmas':
 				case '1.0-ficsmas':
 					apiRequest.gameVersion = '1.0.0-ficsmas';
 					break;
@@ -138,9 +145,11 @@ export class ProductionTab
 			}
 			apiRequest.blockedRecipes = blockedRecipes;
 
-			delete apiRequest.blockedMachines;
+			const solverRequest: IProductionDataApiRequest = angular.copy(apiRequest) as IProductionDataApiRequest;
+			delete solverRequest.blockedMachines;
+			delete solverRequest.powerConsumptionMultiplier;
 
-			Solver.solveProduction(apiRequest, (result) => {
+			Solver.solveProduction(solverRequest, (result) => {
 				const res = () => {
 					let length = 0;
 
@@ -186,13 +195,15 @@ export class ProductionTab
 				name: null,
 				icon: null,
 				schemaVersion: 1,
-				gameVersion: '0',
+				gameVersion: this.version,
 			},
 			request: {
 				allowedAlternateRecipes: [],
 				blockedRecipes: [],
 				blockedMachines: [],
 				blockedResources: [],
+				recipeCostMultiplier: 1,
+				powerConsumptionMultiplier: 1,
 				sinkableResources: [],
 				production: [],
 				input: [],
@@ -242,14 +253,15 @@ export class ProductionTab
 		const shareData = angular.copy(this.data);
 		shareData.metadata.name = this.name;
 		shareData.metadata.icon = this.icon;
+		shareData.metadata.gameVersion = this.version;
 		axios({
 			method: 'POST',
 			url: 'https://api.satisfactorytools.com/v2/share/?version=' + this.version,
 			data: shareData,
 		}).then((response) => {
 			this.scope.$timeout(0).then(() => {
-				this.shareLink = response.data.link;
-				Strings.copyToClipboard(response.data.link, 'Link for sharing has been copied to clipboard.');
+				this.shareLink = this.normalizeShareLink(response.data.link);
+				Strings.copyToClipboard(this.shareLink, 'Link for sharing has been copied to clipboard.');
 			});
 		}).catch(() => {
 			this.scope.$timeout(0).then(() => {
@@ -262,6 +274,17 @@ export class ProductionTab
 	public unregister(): void
 	{
 		this.unregisterCallback();
+	}
+
+	private normalizeShareLink(link: string): string
+	{
+		try {
+			const url = new URL(link);
+			url.pathname = '/' + this.version + '/production';
+			return url.toString();
+		} catch {
+			return link.replace(/\/(0\.8|1\.0(?:-ficsmas)?|1\.1(?:-ficsmas)?|1\.2)\/production/, '/' + this.version + '/production');
+		}
 	}
 
 	public addEmptyProduct(): void

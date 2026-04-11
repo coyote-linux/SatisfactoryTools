@@ -1,6 +1,5 @@
 import model from '@src/Data/Model';
-import * as angular from 'angular';
-import {ILocationService, IScope, ITimeoutService} from 'angular';
+import angular, {ILocationService, IScope, ITimeoutService} from 'angular';
 import {ProductionTab} from '@src/Tools/Production/ProductionTab';
 import {IItemSchema} from '@src/Schema/IItemSchema';
 import {Constants} from '@src/Constants';
@@ -33,6 +32,24 @@ export class ProductionController
 	public readonly alternateRecipes: IRecipeSchema[] = data.getAlternateRecipes();
 	public readonly basicRecipes: IRecipeSchema[] = data.getBaseItemRecipes();
 	public readonly machines: IBuildingSchema[] = data.getManufacturers();
+	public readonly recipeCostMultiplierOptions = [
+		{label: '0.25', value: 0.25},
+		{label: '0.5', value: 0.5},
+		{label: '0.75', value: 0.75},
+		{label: '1.0', value: 1},
+		{label: '1.25', value: 1.25},
+		{label: '1.5', value: 1.5},
+		{label: '1.75', value: 1.75},
+		{label: '2.0', value: 2},
+	];
+	public readonly powerConsumptionMultiplierOptions = [
+		{label: '0.25', value: 0.25},
+		{label: '0.5', value: 0.5},
+		{label: '0.75', value: 0.75},
+		{label: '1.0', value: 1},
+		{label: '2.0', value: 2},
+		{label: '5.0', value: 5},
+	];
 
 	public result: string;
 
@@ -52,12 +69,14 @@ export class ProductionController
 		private readonly $rootScope: IRootScope,
 	)
 	{
-		if ($rootScope.version === '1.0') {
+		if ($rootScope.version === '1.1' || $rootScope.version === '1.0') {
 			this.storageKey = 'production1';
-		} else if ($rootScope.version === '1.0-ficsmas') {
+		} else if ($rootScope.version === '1.1-ficsmas' || $rootScope.version === '1.0-ficsmas') {
 			this.storageKey = 'production-ficsmas';
+		} else if ($rootScope.version === '1.2') {
+			this.storageKey = 'production12';
 		} else {
-			this.storageKey = 'tmpProduction';
+			this.storageKey = 'production1';
 		}
 
 		scope.$timeout = $timeout;

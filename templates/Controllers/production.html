@@ -203,6 +203,23 @@
 						Select items that you want to produce. You can choose between item per minute (will produce given amount from as low amount of raw resources as possible) or maximize (will produce as much as possible, given the raw resource limits).
 					</p>
 
+					<div class="row mb-3" ng-if="$root.version === '1.2'">
+						<div class="col-lg-6">
+							<label for="recipe-cost-multiplier"><b>Recipe Parts Cost Multiplier</b></label>
+							<select id="recipe-cost-multiplier" class="form-control" ng-model="ctrl.tab.data.request.recipeCostMultiplier" ng-options="option.value as option.label for option in ctrl.recipeCostMultiplierOptions"></select>
+							<small class="form-text text-muted">
+								Multiplies recipe ingredient costs for 1.2 calculations without changing recipe outputs.
+							</small>
+						</div>
+						<div class="col-lg-6">
+							<label for="power-consumption-multiplier"><b>Power Consumption Multiplier</b></label>
+							<select id="power-consumption-multiplier" class="form-control" ng-model="ctrl.tab.data.request.powerConsumptionMultiplier" ng-options="option.value as option.label for option in ctrl.powerConsumptionMultiplierOptions"></select>
+							<small class="form-text text-muted">
+								Applies a global multiplier to the displayed machine power usage for 1.2 calculations.
+							</small>
+						</div>
+					</div>
+
 					<table class="production-input-table">
 						<tbody ui-sortable="{axis: 'y',  'ui-floating': true, handle: '> .sortable-handler'}" ng-model="ctrl.tab.data.request.production">
 							<tr ng-repeat="product in ctrl.tab.data.request.production track by $index">
