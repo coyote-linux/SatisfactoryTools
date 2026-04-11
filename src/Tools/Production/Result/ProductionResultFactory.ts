@@ -79,6 +79,7 @@ export class ProductionResultFactory
 						amount,
 						parseInt(clockSpeed, 10),
 						request.powerConsumptionMultiplier || 1,
+						request.recipeCostMultiplier || 1,
 					), data));
 				}
 			}

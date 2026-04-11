@@ -19,7 +19,7 @@ export class RecipeNode extends GraphNode
 		super();
 		const multiplier = this.getMultiplier();
 		for (const ingredient of recipeData.recipe.ingredients) {
-			this.ingredients.push(new ResourceAmount(data.items[ingredient.item], ingredient.amount * multiplier, 0));
+			this.ingredients.push(new ResourceAmount(data.items[ingredient.item], ingredient.amount * multiplier * this.recipeData.recipeCostMultiplier, 0));
 		}
 		for (const product of recipeData.recipe.products) {
 			this.products.push(new ResourceAmount(data.items[product.item], product.amount * multiplier, product.amount * multiplier));
