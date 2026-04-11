@@ -3,9 +3,9 @@
 @use "theme/theme_variables";
 @use 'april';
 
-@import '~ui-bootstrap4/dist/ui-bootstrap-csp.css';
-@import '~perfect-scrollbar/css/perfect-scrollbar.css';
-@import '~vis-network/styles/vis-network.css';
+@import 'ui-bootstrap4/dist/ui-bootstrap-csp.css';
+@import 'perfect-scrollbar/css/perfect-scrollbar.css';
+@import 'vis-network/styles/vis-network.css';
 
 // hey bootswatch, we don't need microtext, thx!
 .navbar, .dropdown-menu, .dropdown-header, .table, label, .radio label, .checkbox label, .help-block {
