@@ -7,10 +7,12 @@ Satisfactory Tools for planning and building the perfect base.
 - PHP 7.1+
 
 ## Installation
-- `git clone git@github.com:greeny/SatisfactoryTools.git`
+- `git clone git@github.com:coyote-linux/SatisfactoryTools.git`
 - `yarn install`
 - `yarn build`
 - Set up a virtual host pointing to `/www` directory (using e.g. Apache or ngnix)
+- Proxy same-origin `/v2/solver` requests to the local ASP.NET solver service, or inject `SOLVER_URL` in `www/index.php` to point at your deployed solver endpoint.
+- Sharing still depends on the upstream `https://api.satisfactorytools.com/v2/share/...` API unless you replace that service locally.
 
 The current stack is verified in CI on Node 24 and was smoke-tested locally on Node 22.
 
