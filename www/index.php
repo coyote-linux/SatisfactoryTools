@@ -17,20 +17,20 @@
 	<meta name="theme-color" content="#df691a">
 	<meta name="title" content="Satisfactory Tools" />
 	<meta name="type" content="website" />
-	<meta name="image" content="https://www.satisfactorytools.com/assets/images/icons/android-chrome-512x512.png" />
-	<meta name="description" content="A collection of powerful tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics and share your builds with others!" />
+	<meta name="image" content="https://ficsit.spugnort.com/assets/images/icons/android-chrome-512x512.png" />
+	<meta name="description" content="A modified fork of Satisfactory Tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics, and track updates from the public fork at ficsit.spugnort.com." />
 	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content="website">
-	<meta property="og:url" content="https://www.satisfactorytools.com/">
+	<meta property="og:url" content="https://ficsit.spugnort.com/">
 	<meta property="og:title" content="Satisfactory Tools">
-	<meta property="og:description" content="A collection of powerful tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics and share your builds with others!">
-	<meta property="og:image" content="https://www.satisfactorytools.com/assets/images/icons/android-chrome-512x512.png">
+	<meta property="og:description" content="A modified fork of Satisfactory Tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics, and track updates from the public fork at ficsit.spugnort.com.">
+	<meta property="og:image" content="https://ficsit.spugnort.com/assets/images/icons/android-chrome-512x512.png">
 	<!-- Twitter -->
 	<meta property="twitter:card" content="summary">
-	<meta property="twitter:url" content="https://www.satisfactorytools.com/">
+	<meta property="twitter:url" content="https://ficsit.spugnort.com/">
 	<meta property="twitter:title" content="Satisfactory Tools">
-	<meta property="twitter:description" content="A collection of powerful tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics and share your builds with others!">
-	<meta property="twitter:image" content="https://www.satisfactorytools.com/assets/images/icons/android-chrome-512x512.png">
+	<meta property="twitter:description" content="A modified fork of Satisfactory Tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics, and track updates from the public fork at ficsit.spugnort.com.">
+	<meta property="twitter:image" content="https://ficsit.spugnort.com/assets/images/icons/android-chrome-512x512.png">
 
 	<style>
 		[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
@@ -120,24 +120,11 @@
 	</div>
 </div>
 
-<script>
-	window.SATISFACTORY_TOOLS_CONFIG = {
-		solverUrl: <?= json_encode(getenv('SOLVER_URL') ?: 'https://api.satisfactorytools.com/v2/solver') ?>
-	};
-</script>
-<script src="/assets/app.js?v=<?= filemtime(__DIR__ . '/assets/app.js') ?>" async></script>
-<script type="text/javascript">
-	var _paq = window._paq || [];
-	_paq.push(["setDoNotTrack", true]);
-	_paq.push(['trackPageView']);
-	_paq.push(['enableLinkTracking']);
-	(function() {
-		var u="//analytics.greeny.dev/";
-		_paq.push(['setTrackerUrl', u+'matomo.php']);
-		_paq.push(['setSiteId', '4']);
-		var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-		g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
-	})();
-</script>
+	<script>
+		window.SATISFACTORY_TOOLS_CONFIG = {
+			solverUrl: <?= json_encode(getenv('SOLVER_URL') ?: '/v2/solver') ?>
+		};
+	</script>
+	<script src="/assets/app.js?v=<?= filemtime(__DIR__ . '/assets/app.js') ?>" async></script>
 </body>
 </html>

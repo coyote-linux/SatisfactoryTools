@@ -18,7 +18,7 @@ export class Solver
 	{
 		axios({
 			method: 'post',
-			url: window.SATISFACTORY_TOOLS_CONFIG?.solverUrl || 'https://api.satisfactorytools.com/v2/solver',
+			url: window.SATISFACTORY_TOOLS_CONFIG?.solverUrl || '/v2/solver',
 			data: productionRequest,
 		}).then((response) => {
 			if ('result' in response.data) {
