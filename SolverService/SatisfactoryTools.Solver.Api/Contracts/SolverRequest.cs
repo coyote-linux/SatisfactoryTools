@@ -16,6 +16,7 @@ public sealed class SolverRequest
 	public string? GameVersion { get; init; }
 	public double? RecipeCostMultiplier { get; init; }
 	public double? PowerConsumptionMultiplier { get; init; }
+	public bool Debug { get; init; }
 }
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]

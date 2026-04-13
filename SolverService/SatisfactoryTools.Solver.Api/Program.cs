@@ -31,8 +31,8 @@ app.MapPost("/v2/solver", async (HttpRequest request, ProductionPlannerSolver so
 			throw new SolverValidationException("Invalid payload.");
 		}
 
-		var result = solver.Solve(payload);
-		return Results.Json(new {code = 200, result});
+		var execution = solver.Solve(payload);
+		return Results.Json(new {code = 200, result = execution.Result, debug = execution.Debug});
 	} catch (SolverValidationException exception) {
 		return Results.Json(new {code = 500, error = exception.Message}, statusCode: 500);
 	} catch (JsonException exception) {
