@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {IProductionToolResponse} from '@src/Tools/Production/IProductionToolResponse';
-import {IProductionDataApiRequest} from '@src/Tools/Production/IProductionData';
+import {IProductionDataApiDebug, IProductionDataApiRequest, IProductionDataApiResponseEnvelope} from '@src/Tools/Production/IProductionData';
 
 declare global
 {
@@ -14,19 +14,36 @@ declare global
 export class Solver
 {
 
-	public static solveProduction(productionRequest: IProductionDataApiRequest, callback: (response: IProductionToolResponse) => void): void
+	public static solveProduction(productionRequest: IProductionDataApiRequest, callback: (response: ISolverProductionResponse) => void): void
 	{
 		axios({
 			method: 'post',
 			url: window.SATISFACTORY_TOOLS_CONFIG?.solverUrl || '/v2/solver',
 			data: productionRequest,
 		}).then((response) => {
-			if ('result' in response.data) {
-				callback(response.data.result);
-			}
-		}).catch(() => {
-			callback({});
+			const payload = response.data as IProductionDataApiResponseEnvelope;
+			callback({
+				result: payload.result || {},
+				debug: payload.debug,
+				error: payload.error,
+			});
+		}).catch((error) => {
+			const payload = error.response?.data as IProductionDataApiResponseEnvelope | undefined;
+			callback({
+				result: {},
+				debug: payload?.debug,
+				error: payload?.error || error.message || 'Unable to contact the solver.',
+			});
 		});
 	}
+
+}
+
+export interface ISolverProductionResponse
+{
+
+	result: IProductionToolResponse;
+	debug?: IProductionDataApiDebug;
+	error?: string;
 
 }

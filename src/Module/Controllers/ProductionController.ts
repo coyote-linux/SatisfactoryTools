@@ -3,7 +3,7 @@ import angular, {ILocationService, IScope, ITimeoutService} from 'angular';
 import {ProductionTab} from '@src/Tools/Production/ProductionTab';
 import {IItemSchema} from '@src/Schema/IItemSchema';
 import {Constants} from '@src/Constants';
-import data, {Data} from '@src/Data/Data';
+import data from '@src/Data/Data';
 import {IRecipeSchema} from '@src/Schema/IRecipeSchema';
 import {IResourceSchema} from '@src/Schema/IResourceSchema';
 import {DataStorageService} from '@src/Module/Services/DataStorageService';
@@ -124,22 +124,13 @@ export class ProductionController
 		const file = files[0];
 		const reader = new FileReader();
 		reader.readAsText(file, 'utf-8');
-		reader.onload = () => {
-			try {
-				const tabs = FileExporter.importTabs(reader.result as string);
+			reader.onload = () => {
+				try {
+					const tabs = FileExporter.importTabs(reader.result as string);
 
-				for (const tab of tabs) {
-					if (JSON.stringify(tab.request.resourceMax) === JSON.stringify(Data.resourceAmountsU8)) {
-						tab.request.resourceMax = Data.resourceAmounts;
+					for (const tab of tabs) {
+						this.tabs.push(new ProductionTab(this.scope, this.$rootScope.version, tab));
 					}
-
-					if (typeof tab.request.resourceMax.Desc_SAM_C === 'undefined') {
-						tab.request.resourceMax.Desc_SAM_C = 0;
-					}
-
-					tab.request.resourceWeight = Data.resourceWeights;
-					this.tabs.push(new ProductionTab(this.scope, this.$rootScope.version, tab));
-				}
 
 				Strings.addNotification('Import complete', 'Successfuly imported ' + tabs.length + ' tab' + (tabs.length === 1 ? '' : 's') + '.');
 				this.scope.$apply();

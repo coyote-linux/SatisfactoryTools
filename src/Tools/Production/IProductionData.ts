@@ -40,6 +40,7 @@ export interface IProductionDataApiRequest extends IProductionDataRequest
 {
 
 	gameVersion: string;
+	debug?: boolean;
 
 }
 
@@ -65,5 +66,40 @@ export interface IProductionDataApiResponse
 {
 
 	[key: string]: number;
+
+}
+
+export interface IProductionDataApiResponseEnvelope
+{
+
+	result?: IProductionDataApiResponse;
+	error?: string;
+	debug?: IProductionDataApiDebug;
+
+}
+
+export interface IProductionDataApiDebug
+{
+
+	status: string;
+	phase?: string;
+	message: string;
+	solverVersion?: string;
+	variableCount?: number;
+	constraintCount?: number;
+	wallTimeMs?: number;
+	iterations?: number;
+	nodes?: number;
+	items?: IProductionDataApiDebugItem[];
+
+}
+
+export interface IProductionDataApiDebugItem
+{
+
+	item: string;
+	name: string;
+	reachable: boolean;
+	reasons: string[];
 
 }

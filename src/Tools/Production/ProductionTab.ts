@@ -6,7 +6,7 @@ import axios from 'axios';
 import {Strings} from '@src/Utils/Strings';
 import {IItemSchema} from '@src/Schema/IItemSchema';
 import {Callbacks} from '@src/Utils/Callbacks';
-import {IProductionData, IProductionDataApiRequest, IProductionDataRequestInput, IProductionDataRequestItem} from '@src/Tools/Production/IProductionData';
+import {IProductionData, IProductionDataApiDebug, IProductionDataApiRequest, IProductionDataRequestInput, IProductionDataRequestItem} from '@src/Tools/Production/IProductionData';
 import {ResultStatus} from '@src/Tools/Production/ResultStatus';
 import {Solver} from '@src/Solver/Solver';
 import {ProductionResult} from '@src/Tools/Production/Result/ProductionResult';
@@ -20,6 +20,7 @@ export class ProductionTab
 	public state = {
 		expanded: true,
 		renaming: false,
+		showDebugOutput: false,
 		sinkableResourcesExpanded: true,
 		alternateRecipesExpanded: true,
 		basicRecipesExpanded: true,
@@ -41,6 +42,8 @@ export class ProductionTab
 	public resultStatus: ResultStatus = ResultStatus.NO_INPUT;
 	public resultNew: ProductionResult|undefined;
 	public easter: boolean = false;
+	public solverDebug: IProductionDataApiDebug|undefined;
+	public solverError: string = '';
 	public data: IProductionData;
 
 	private readonly unregisterCallback: () => void;
@@ -54,6 +57,8 @@ export class ProductionTab
 			this.resetData();
 			this.addEmptyProduct();
 		}
+
+		this.normalizeRequestData();
 
 		if (typeof this.data.request.blockedMachines === 'undefined') {
 			this.data.request.blockedMachines = [];
@@ -94,6 +99,9 @@ export class ProductionTab
 		}
 
 		if (!request) {
+			this.resultNew = undefined;
+			this.solverDebug = undefined;
+			this.solverError = '';
 			this.resultStatus = ResultStatus.NO_INPUT;
 			return;
 		}
@@ -157,9 +165,13 @@ export class ProductionTab
 			if (this.version !== '1.2') {
 				delete solverRequest.recipeCostMultiplier;
 			}
+			solverRequest.debug = this.state.showDebugOutput;
 
-			Solver.solveProduction(solverRequest, (result) => {
+			Solver.solveProduction(solverRequest, (response) => {
 				const res = () => {
+					const result = response.result;
+					this.solverDebug = response.debug;
+					this.solverError = response.error || '';
 					let length = 0;
 
 					for (const k in result) {
@@ -220,6 +232,24 @@ export class ProductionTab
 				resourceWeight: angular.copy(Data.resourceWeights),
 			},
 		};
+		this.solverDebug = undefined;
+		this.solverError = '';
+	}
+
+	public hasSolverDebugOutput(): boolean
+	{
+		return !!this.solverDebug || !!this.solverError;
+	}
+
+	public getSolverDebugOutput(): string
+	{
+		if (this.solverDebug && this.solverError) {
+			return JSON.stringify({error: this.solverError, debug: this.solverDebug}, null, '\t');
+		}
+		if (this.solverDebug) {
+			return JSON.stringify(this.solverDebug, null, '\t');
+		}
+		return this.solverError;
 	}
 
 	get icon(): string|null
@@ -297,6 +327,36 @@ export class ProductionTab
 		} catch {
 			return link.replace(/\/(0\.8|1\.0(?:-ficsmas)?|1\.1(?:-ficsmas)?|1\.2)\/production/, '/' + this.version + '/production');
 		}
+	}
+
+	private normalizeRequestData(): void
+	{
+		this.data.request.resourceMax = ProductionTab.normalizeResourceMax(this.data.request.resourceMax);
+		this.data.request.resourceWeight = ProductionTab.normalizeResourceWeights(this.data.request.resourceWeight);
+	}
+
+	private static normalizeResourceMax(resourceMax: {[key: string]: number}|undefined): {[key: string]: number}
+	{
+		if (!resourceMax) {
+			return angular.copy(Data.resourceAmounts);
+		}
+
+		if (JSON.stringify(resourceMax) === JSON.stringify(Data.resourceAmountsU8)) {
+			return angular.copy(Data.resourceAmounts);
+		}
+
+		return {
+			...Data.resourceAmounts,
+			...resourceMax,
+		};
+	}
+
+	private static normalizeResourceWeights(resourceWeight: {[key: string]: number}|undefined): {[key: string]: number}
+	{
+		return {
+			...Data.resourceWeights,
+			...(resourceWeight || {}),
+		};
 	}
 
 	public addEmptyProduct(): void
