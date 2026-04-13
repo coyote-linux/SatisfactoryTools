@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Added this changelog to track the ongoing stack-modernization work and the remaining path to Satisfactory v1.2 support.
 - Added a new C# replacement solver service under `SolverService/` with a compatible `/v2/solver` HTTP API and initial OR-Tools-based planning engine.
 - Added 1.2-only production-planner controls for recipe cost and power multipliers.
+- Added a local file-backed share store and same-origin `/v2/share` endpoints to the C# service so planner sharing can run without the upstream hosted API.
 
 ### Changed
 - Modernized the frontend build pipeline for current Node versions by replacing legacy webpack loader usage with built-in HTML asset handling and standard module imports.
@@ -21,7 +22,10 @@ All notable changes to this project will be documented in this file.
 - Updated the local C# solver to accept and apply a `recipeCostMultiplier` for 1.2 production plans.
 - Updated the default solver path to same-origin `/v2/solver` so deployed forks can proxy browser solve requests through their own host.
 - Updated the site metadata, homepage copy, and shared footer/community links to describe this fork while keeping visible attribution to the original project and author.
-- Updated the deployment docs to explain the same-origin solver proxy requirement and to note that sharing still depends on the upstream hosted share API.
+- Updated the deployment docs to explain the same-origin solver and share proxy requirements for self-hosted forks.
+- Updated planner sharing to create and load saved plans through the local same-origin `/v2/share` API.
+- Refined the 1.2 production-planner solver to maximize requested outputs first, then minimize weighted resource extraction, then break ties with recipe power cost.
+- Refreshed the site shell and production-planner styling with the darker amber fork theme.
 
 ### Removed
 - Removed `script-loader` and `angular-templatecache-loader` from the build dependency chain.
@@ -35,3 +39,6 @@ All notable changes to this project will be documented in this file.
 - Corrected production-graph ingredient flow labels so recipe cost multiplier changes now propagate into visualization edges and Items-tab consumption totals.
 - Corrected Items-tab producer totals so externally supplied inputs are counted in item production breakdowns.
 - Fixed the deployment configuration for `ficsit.spugnort.com` so the fork now serves correctly over Apache with the local solver proxied behind the same origin.
+- Removed the remaining runtime dependency on `api.satisfactorytools.com` for planner share creation and loading.
+- Corrected planner recipe weighting so rare or costly resource conversions are no longer favored over cheaper direct resources in equivalent solutions.
+- Corrected 1.2 recipe cost multiplier handling so solid inputs round to the nearest whole recipe cost with a minimum of 1, while fluid inputs keep decimal recipe costs.
