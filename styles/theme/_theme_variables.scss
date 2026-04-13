@@ -1,30 +1,29 @@
 @use "sass:color";
 
-// Superhero 4.5.0
-// Bootswatch
+// Amber Foundry Theme Variables
 
 //
 // Color system
 //
 
 $white: #fff !default;
-$gray-100: #EBEBEB !default;
-$gray-200: #4E5D6C !default;
-$gray-300: #dee2e6 !default;
-$gray-400: #ced4da !default;
-$gray-500: #adb5bd !default;
+$gray-100: #e0e0e0 !default; // text-main
+$gray-200: #1a1a1a !default; // bg-surface
+$gray-300: #262626 !default; // bg-surface-hover
+$gray-400: #333333 !default; // border-color
+$gray-500: #888888 !default; // text-muted
 $gray-600: #868e96 !default;
 $gray-700: #495057 !default;
 $gray-800: #343a40 !default;
-$gray-900: #212529 !default;
+$gray-900: #0d0d0d !default; // bg-base
 $black: #000 !default;
 
-$blue: #DF691A !default;
+$blue: #ff8c00 !default; // accent-primary
 $indigo: #6610f2 !default;
 $purple: #6f42c1 !default;
 $pink: #e83e8c !default;
-$red: #d9534f !default;
-$orange: #f0ad4e !default;
+$red: #ff4444 !default;
+$orange: #ff8c00 !default;
 $yellow: #f0ad4e !default;
 $green: #5cb85c !default;
 $teal: #20c997 !default;
@@ -36,105 +35,109 @@ $success: $green !default;
 $info: $cyan !default;
 $warning: $yellow !default;
 $danger: $red !default;
-$light: color.adjust($gray-200, $lightness: 35%, $space: hsl) !default;
+$light: $gray-300 !default;
 $dark: $gray-200 !default;
 
 $yiq-contrasted-threshold: 185 !default;
 
 // Body
 
-$body-bg: #2B3E50 !default;
+$body-bg: $gray-900 !default;
 $body-color: $gray-100 !default;
 
 // Components
 
-$border-radius: 0px !default;
-$border-radius-lg: 0px !default;
-$border-radius-sm: 0px !default;
+$border-radius: 4px !default;
+$border-radius-lg: 4px !default;
+$border-radius-sm: 2px !default;
 
 // Fonts
-$font-family-sans-serif: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !default;
+$font-family-sans-serif: system-ui, -apple-system, sans-serif !default;
+$font-family-heading: 'Impact', system-ui, sans-serif !default;
 
-$text-muted: rgba(255, 255, 255, .4) !default;
+$text-muted: $gray-500 !default;
 
 // Tables
 
-$table-accent-bg: rgba($white, .05) !default;
-$table-hover-bg: rgba($white, .075) !default;
+$table-accent-bg: $gray-300 !default;
+$table-hover-bg: $gray-300 !default;
 
-$table-border-color: rgba($black, .15) !default;
+$table-border-color: $gray-400 !default;
 
-$table-head-bg: $light !default;
+$table-head-bg: $gray-200 !default;
 
-$table-dark-bg: $light !default;
-$table-dark-border-color: $gray-200 !default;
-$table-dark-color: $body-bg !default;
+$table-dark-bg: $gray-200 !default;
+$table-dark-border-color: $gray-400 !default;
+$table-dark-color: $body-color !default;
 
 // Forms
 
-$input-disabled-bg: $gray-100 !default;
+$input-disabled-bg: $gray-300 !default;
 
-$input-border-color: transparent !default;
+$input-border-color: $gray-400 !default;
+$input-bg: $gray-900 !default;
+$input-color: $primary !default;
 
 $input-group-addon-color: $body-color !default;
 
 $custom-file-button-color: $white !default;
-$custom-file-border-color: $gray-200 !default;
+$custom-file-border-color: $gray-400 !default;
 
 // Dropdowns
 
 $dropdown-bg: $gray-200 !default;
-$dropdown-divider-bg: rgba($black, .15) !default;
+$dropdown-divider-bg: $gray-400 !default;
 
 $dropdown-link-color: $body-color !default;
-$dropdown-link-hover-color: $dropdown-link-color !default;
-$dropdown-link-hover-bg: $table-hover-bg !default;
+$dropdown-link-hover-color: $primary !default;
+$dropdown-link-hover-bg: $gray-300 !default;
 
 // Navs
 
-$nav-link-disabled-color: rgba(255, 255, 255, .4) !default;
+$nav-link-disabled-color: $gray-500 !default;
 
-$nav-tabs-border-color: $gray-200 !default;
-$nav-tabs-link-active-color: $body-color !default;
-$nav-tabs-link-active-border-color: $gray-200 !default;
+$nav-tabs-border-color: $gray-400 !default;
+$nav-tabs-link-active-color: $primary !default;
+$nav-tabs-link-active-border-color: $gray-400 !default;
 
 // Navbar
 
 $navbar-padding-y: 0.25rem !default;
 
-$navbar-dark-color: rgba($white, .75) !default;
-$navbar-dark-hover-color: $white !default;
+$navbar-dark-color: $gray-500 !default;
+$navbar-dark-hover-color: $primary !default;
 
 // Pagination
 
-$pagination-color: $white !default;
+$pagination-color: $gray-100 !default;
 $pagination-bg: $gray-200 !default;
-$pagination-border-color: transparent !default;
+$pagination-border-color: $gray-400 !default;
 
-$pagination-hover-color: $white !default;
-$pagination-hover-bg: $nav-link-disabled-color !default;
-$pagination-hover-border-color: $pagination-border-color !default;
+$pagination-hover-color: $primary !default;
+$pagination-hover-bg: $gray-300 !default;
+$pagination-hover-border-color: $gray-400 !default;
 
-$pagination-disabled-color: $nav-link-disabled-color !default;
-$pagination-disabled-bg: $pagination-bg !default;
-$pagination-disabled-border-color: $pagination-border-color !default;
+$pagination-disabled-color: $gray-500 !default;
+$pagination-disabled-bg: $gray-200 !default;
+$pagination-disabled-border-color: $gray-400 !default;
 
 // Cards
 
-$card-cap-bg: $table-hover-bg !default;
+$card-cap-bg: $gray-200 !default;
 $card-bg: $gray-200 !default;
-$card-inner-border-radius: 0px !default;
+$card-inner-border-radius: 4px !default;
+$card-border-color: $gray-400 !default;
 
 // Popovers
 
 $popover-bg: $gray-200 !default;
 
-$popover-header-bg: $table-hover-bg !default;
+$popover-header-bg: $gray-300 !default;
 
 // Toasts
 
 $toast-background-color: $gray-200 !default;
-$toast-border-color: rgba(0, 0, 0, .2) !default;
+$toast-border-color: $gray-400 !default;
 
 $toast-header-color: $body-color !default;
 $toast-header-background-color: $toast-background-color !default;
@@ -144,24 +147,24 @@ $toast-header-border-color: $toast-border-color !default;
 
 $modal-content-bg: $gray-200 !default;
 
-$modal-header-border-color: rgba(0, 0, 0, .2) !default;
+$modal-header-border-color: $gray-400 !default;
 
 // List group
 
 $list-group-bg: $gray-200 !default;
-$list-group-border-color: transparent !default;
+$list-group-border-color: $gray-400 !default;
 
-$list-group-hover-bg: $nav-link-disabled-color !default;
+$list-group-hover-bg: $gray-300 !default;
 
-$list-group-disabled-color: $nav-link-disabled-color !default;
+$list-group-disabled-color: $gray-500 !default;
 
-$list-group-action-color: $white !default;
-$list-group-action-hover-color: $white !default;
+$list-group-action-color: $gray-100 !default;
+$list-group-action-hover-color: $primary !default;
 
 // Breadcrumbs
 
-$breadcrumb-divider-color: $body-color !default;
-$breadcrumb-active-color: $body-color !default;
+$breadcrumb-divider-color: $gray-500 !default;
+$breadcrumb-active-color: $primary !default;
 
 // Code
 
