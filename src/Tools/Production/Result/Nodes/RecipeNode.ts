@@ -9,6 +9,7 @@ import {Numbers} from '@src/Utils/Numbers';
 
 export class RecipeNode extends GraphNode
 {
+	private static readonly ingredientScaleEpsilon = 1e-8;
 
 	public ingredients: ResourceAmount[] = [];
 	public products: ResourceAmount[] = [];
@@ -19,7 +20,7 @@ export class RecipeNode extends GraphNode
 		super();
 		const multiplier = this.getMultiplier();
 		for (const ingredient of recipeData.recipe.ingredients) {
-			this.ingredients.push(new ResourceAmount(data.items[ingredient.item], ingredient.amount * multiplier * this.recipeData.recipeCostMultiplier, 0));
+			this.ingredients.push(new ResourceAmount(data.items[ingredient.item], this.getScaledIngredientAmount(ingredient.amount, data.items[ingredient.item].liquid) * multiplier, 0));
 		}
 		for (const product of recipeData.recipe.products) {
 			this.products.push(new ResourceAmount(data.items[product.item], product.amount * multiplier, product.amount * multiplier));
@@ -88,6 +89,19 @@ export class RecipeNode extends GraphNode
 	private getMultiplier(): number
 	{
 		return this.recipeData.amount * this.recipeData.machine.metadata.manufacturingSpeed * (this.recipeData.clockSpeed / 100) * (60 / this.recipeData.recipe.time);
+	}
+
+	private getScaledIngredientAmount(amount: number, isLiquid: boolean): number
+	{
+		const scaledAmount = amount * this.recipeData.recipeCostMultiplier;
+		if (isLiquid) {
+			return scaledAmount;
+		}
+		if (scaledAmount <= RecipeNode.ingredientScaleEpsilon) {
+			return 0;
+		}
+
+		return Math.max(1, Math.floor(scaledAmount + 0.5 + RecipeNode.ingredientScaleEpsilon));
 	}
 
 }

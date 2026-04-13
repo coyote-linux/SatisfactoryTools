@@ -12,6 +12,7 @@ public sealed class GameItem
 {
 	public string ClassName { get; init; } = string.Empty;
 	public string Name { get; init; } = string.Empty;
+	public bool Liquid { get; init; }
 	public double SinkPoints { get; init; }
 }
 

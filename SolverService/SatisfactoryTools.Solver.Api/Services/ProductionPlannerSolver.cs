@@ -7,8 +7,8 @@ namespace SatisfactoryTools.Solver.Api.Services;
 public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 {
 	private const double SolveEpsilon = 1e-8;
-	private const double MaximizeWeight = 1_000_000d;
 	private const double DefaultMultiplier = 1d;
+	private const double BuildingTieBreakerWeight = 0.001d;
 	private const string ProductionPerMinute = "perMinute";
 	private const string ProductionMax = "max";
 
@@ -61,6 +61,11 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 			pair => pair.Key,
 			pair => solver.MakeNumVar(0, double.PositiveInfinity, pair.Key + "#Product"),
 			StringComparer.Ordinal);
+		var allObjectiveVariables = mineVariables.Values
+			.Concat(maxOutputVariables.Values)
+			.Concat(recipeVariables.Values)
+			.Distinct()
+			.ToArray();
 
 		var allItems = new HashSet<string>(data.Items.Keys, StringComparer.Ordinal);
 		foreach (var item in mineVariables.Keys) {
@@ -124,42 +129,38 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 			}
 		}
 
-		var objective = solver.Objective();
 		var hasMaxOutputs = maxOutputVariables.Count > 0;
+		var maximizeObjective = maxOutputVariables.ToDictionary(
+			pair => pair.Value,
+			pair => maxOutputs[pair.Key],
+			ReferenceEqualityComparer.Instance);
+		var resourceObjective = mineVariables.ToDictionary(
+			pair => pair.Value,
+			pair => request.ResourceWeight.GetValueOrDefault(pair.Key, 0),
+			ReferenceEqualityComparer.Instance);
+		var powerObjective = recipeVariables.ToDictionary(
+			pair => pair.Value,
+			pair => pair.Key.PowerCost + BuildingTieBreakerWeight,
+			ReferenceEqualityComparer.Instance);
+
+		LinearSolver.ResultStatus status;
 		if (hasMaxOutputs) {
-			foreach (var (item, variable) in maxOutputVariables) {
-				objective.SetCoefficient(variable, maxOutputs[item] * MaximizeWeight);
+			status = SolvePhase(solver, maximizeObjective, maximize: true, allObjectiveVariables);
+			if (status is not LinearSolver.ResultStatus.OPTIMAL and not LinearSolver.ResultStatus.FEASIBLE) {
+				return new SortedDictionary<string, double>(StringComparer.Ordinal);
 			}
-			foreach (var (item, variable) in mineVariables) {
-				objective.SetCoefficient(variable, -request.ResourceWeight.GetValueOrDefault(item, 0));
-			}
-			foreach (var variable in sinkVariables.Values) {
-				objective.SetCoefficient(variable, -0.01);
-			}
-			foreach (var variable in byproductVariables.Values) {
-				objective.SetCoefficient(variable, -0.01);
-			}
-			foreach (var variable in recipeVariables.Values) {
-				objective.SetCoefficient(variable, -0.001);
-			}
-			objective.SetMaximization();
-		} else {
-			foreach (var (item, variable) in mineVariables) {
-				objective.SetCoefficient(variable, request.ResourceWeight.GetValueOrDefault(item, 0));
-			}
-			foreach (var variable in sinkVariables.Values) {
-				objective.SetCoefficient(variable, 0.01);
-			}
-			foreach (var variable in byproductVariables.Values) {
-				objective.SetCoefficient(variable, 0.01);
-			}
-			foreach (var variable in recipeVariables.Values) {
-				objective.SetCoefficient(variable, 0.001);
-			}
-			objective.SetMinimization();
+
+			BindObjectiveValue(solver, maximizeObjective, CalculateObjectiveValue(maximizeObjective), maximize: true, "MaxOutputObjective");
 		}
 
-		var status = solver.Solve();
+		status = SolvePhase(solver, resourceObjective, maximize: false, allObjectiveVariables);
+		if (status is not LinearSolver.ResultStatus.OPTIMAL and not LinearSolver.ResultStatus.FEASIBLE) {
+			return new SortedDictionary<string, double>(StringComparer.Ordinal);
+		}
+
+		BindObjectiveValue(solver, resourceObjective, CalculateObjectiveValue(resourceObjective), maximize: false, "ResourceObjective");
+
+		status = SolvePhase(solver, powerObjective, maximize: false, allObjectiveVariables);
 		if (status is not LinearSolver.ResultStatus.OPTIMAL and not LinearSolver.ResultStatus.FEASIBLE) {
 			return new SortedDictionary<string, double>(StringComparer.Ordinal);
 		}
@@ -196,7 +197,7 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 			throw new SolverValidationException("The mandatory item 'gameVersion' is missing.");
 		}
 
-		if (request.GameVersion is not ("0.8.0" or "1.0.0" or "1.0.0-ficsmas")) {
+		if (request.GameVersion is not ("0.8.0" or "1.0.0" or "1.0.0-ficsmas" or "1.1.0" or "1.2.0")) {
 			throw new SolverValidationException("Invalid version");
 		}
 
@@ -206,6 +207,10 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 
 		if (request.RecipeCostMultiplier.HasValue && request.RecipeCostMultiplier.Value <= 0) {
 			throw new SolverValidationException("recipeCostMultiplier must be greater than 0.");
+		}
+
+		if (request.RecipeCostMultiplier.HasValue && request.GameVersion != "1.2.0") {
+			throw new SolverValidationException("recipeCostMultiplier is only supported for gameVersion '1.2.0'.");
 		}
 	}
 
@@ -237,12 +242,99 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 			var building = data.Buildings[machineClass];
 			var baseRate = building.Metadata.ManufacturingSpeed * (60d / recipe.Time);
 			var productRates = recipe.Products.ToDictionary((entry) => entry.Item, (entry) => entry.Amount * baseRate, StringComparer.Ordinal);
-			var ingredientRates = recipe.Ingredients.ToDictionary((entry) => entry.Item, (entry) => entry.Amount * baseRate * recipeCostMultiplier, StringComparer.Ordinal);
+			var ingredientRates = recipe.Ingredients.ToDictionary((entry) => entry.Item, (entry) => ScaleIngredientRequirement(entry.Amount, recipeCostMultiplier, data.Items[entry.Item].Liquid) * baseRate, StringComparer.Ordinal);
+			var powerCost = GetPowerCost(recipe, building);
 
-			recipes.Add(new AllowedRecipe(recipe, machineClass, ingredientRates, productRates));
+			recipes.Add(new AllowedRecipe(recipe, machineClass, ingredientRates, productRates, powerCost));
 		}
 
 		return recipes;
+	}
+
+	private static LinearSolver.ResultStatus SolvePhase(
+		LinearSolver solver,
+		IReadOnlyDictionary<Variable, double> coefficients,
+		bool maximize,
+		IEnumerable<Variable> objectiveVariables)
+	{
+		var objective = solver.Objective();
+		foreach (var variable in objectiveVariables) {
+			objective.SetCoefficient(variable, 0);
+		}
+
+		foreach (var (variable, coefficient) in coefficients) {
+			if (Math.Abs(coefficient) > SolveEpsilon) {
+				objective.SetCoefficient(variable, coefficient);
+			}
+		}
+
+		if (maximize) {
+			objective.SetMaximization();
+		} else {
+			objective.SetMinimization();
+		}
+
+		return solver.Solve();
+	}
+
+	private static double CalculateObjectiveValue(IReadOnlyDictionary<Variable, double> coefficients)
+	{
+		var value = 0d;
+		foreach (var (variable, coefficient) in coefficients) {
+			value += coefficient * variable.SolutionValue();
+		}
+
+		return value;
+	}
+
+	private static void BindObjectiveValue(
+		LinearSolver solver,
+		IReadOnlyDictionary<Variable, double> coefficients,
+		double value,
+		bool maximize,
+		string constraintName)
+	{
+		if (coefficients.Count == 0) {
+			return;
+		}
+
+		var tolerance = Math.Max(SolveEpsilon, Math.Abs(value) * 1e-6);
+		var constraint = maximize
+			? solver.MakeConstraint(value - tolerance, double.PositiveInfinity, constraintName)
+			: solver.MakeConstraint(double.NegativeInfinity, value + tolerance, constraintName);
+
+		foreach (var (variable, coefficient) in coefficients) {
+			constraint.SetCoefficient(variable, coefficient);
+		}
+	}
+
+	private static double GetPowerCost(GameRecipe recipe, GameBuilding building)
+	{
+		if (recipe.IsVariablePower) {
+			var minPower = Math.Max(recipe.MinPower, 0);
+			var maxPower = Math.Max(recipe.MaxPower, 0);
+			if (maxPower > SolveEpsilon) {
+				return minPower > SolveEpsilon ? (minPower + maxPower) / 2d : maxPower;
+			}
+			if (minPower > SolveEpsilon) {
+				return minPower;
+			}
+		}
+
+		return Math.Max(building.Metadata.PowerConsumption, 0);
+	}
+
+	private static double ScaleIngredientRequirement(double amount, double recipeCostMultiplier, bool isLiquid)
+	{
+		var scaledAmount = amount * recipeCostMultiplier;
+		if (isLiquid) {
+			return scaledAmount;
+		}
+		if (scaledAmount <= SolveEpsilon) {
+			return 0;
+		}
+
+		return Math.Max(1d, Math.Floor(scaledAmount + 0.5d + SolveEpsilon));
 	}
 
 	private static void TryAdd(IDictionary<string, double> result, string key, double value)
@@ -272,9 +364,25 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 		GameRecipe Recipe,
 		string MachineClass,
 		IReadOnlyDictionary<string, double> IngredientRates,
-		IReadOnlyDictionary<string, double> ProductRates)
+		IReadOnlyDictionary<string, double> ProductRates,
+		double PowerCost)
 	{
 		public string ResponseKey => Recipe.ClassName + "@100#" + MachineClass;
+	}
+
+	private sealed class ReferenceEqualityComparer : IEqualityComparer<Variable>
+	{
+		public static readonly ReferenceEqualityComparer Instance = new();
+
+		public bool Equals(Variable? x, Variable? y)
+		{
+			return ReferenceEquals(x, y);
+		}
+
+		public int GetHashCode(Variable obj)
+		{
+			return obj.GetHashCode();
+		}
 	}
 
 	private sealed class AllowedRecipeComparer : IEqualityComparer<AllowedRecipe>
