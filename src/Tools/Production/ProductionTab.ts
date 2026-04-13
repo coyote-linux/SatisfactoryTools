@@ -105,6 +105,12 @@ export class ProductionTab
 			apiRequest.recipeCostMultiplier = this.version === '1.2' ? apiRequest.recipeCostMultiplier : 1;
 			apiRequest.powerConsumptionMultiplier = this.version === '1.2' ? apiRequest.powerConsumptionMultiplier : 1;
 			switch (this.version) {
+				case '1.2':
+					apiRequest.gameVersion = '1.2.0';
+					break;
+				case '1.1':
+					apiRequest.gameVersion = '1.1.0';
+					break;
 				case '1.1-ficsmas':
 				case '1.0-ficsmas':
 					apiRequest.gameVersion = '1.0.0-ficsmas';
@@ -148,6 +154,9 @@ export class ProductionTab
 			const solverRequest: IProductionDataApiRequest = angular.copy(apiRequest) as IProductionDataApiRequest;
 			delete solverRequest.blockedMachines;
 			delete solverRequest.powerConsumptionMultiplier;
+			if (this.version !== '1.2') {
+				delete solverRequest.recipeCostMultiplier;
+			}
 
 			Solver.solveProduction(solverRequest, (result) => {
 				const res = () => {
@@ -256,7 +265,7 @@ export class ProductionTab
 		shareData.metadata.gameVersion = this.version;
 		axios({
 			method: 'POST',
-			url: 'https://api.satisfactorytools.com/v2/share/?version=' + this.version,
+			url: '/v2/share/?version=' + this.version,
 			data: shareData,
 		}).then((response) => {
 			this.scope.$timeout(0).then(() => {
@@ -279,9 +288,12 @@ export class ProductionTab
 	private normalizeShareLink(link: string): string
 	{
 		try {
-			const url = new URL(link);
-			url.pathname = '/' + this.version + '/production';
-			return url.toString();
+			const currentOrigin = window.location.protocol + '//' + window.location.host;
+			const sourceUrl = new URL(link, currentOrigin);
+			const normalizedUrl = new URL('/' + this.version + '/production', currentOrigin);
+			normalizedUrl.search = sourceUrl.search;
+			normalizedUrl.hash = sourceUrl.hash;
+			return normalizedUrl.toString();
 		} catch {
 			return link.replace(/\/(0\.8|1\.0(?:-ficsmas)?|1\.1(?:-ficsmas)?|1\.2)\/production/, '/' + this.version + '/production');
 		}

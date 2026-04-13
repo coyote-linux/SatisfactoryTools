@@ -89,7 +89,7 @@ export class ProductionController
 			if ('share' in query) {
 				axios({
 					method: 'GET',
-					url: 'https://api.satisfactorytools.com/v2/share/' + encodeURIComponent(query.share),
+					url: '/v2/share/' + encodeURIComponent(query.share),
 				}).then((response) => {
 					$timeout(0).then(() => {
 						const tabData: IProductionData = response.data.data;

@@ -119,12 +119,12 @@ These scripts are content-maintenance tools, not part of the minimum runtime nee
 
 ### External dependencies at runtime
 
-- Remote share API: `https://api.satisfactorytools.com/v2/share/...`
 - Public deployments typically inject a same-origin solver endpoint such as `/v2/solver` through `www/index.php`, with Apache or another reverse proxy forwarding those requests to the local ASP.NET solver service.
+- Public deployments should also expose the local share endpoints on the same origin (`/v2/share/...`) so planner sharing does not depend on upstream hosted APIs.
 
 In local development, `www/index.php` can inject a custom solver URL so the browser targets the local C# service instead of any hosted solver.
 
-If the deployment target blocks outbound network access, local solving can still work, but share loading/creation will not until `/v2/share/...` is also replaced.
+If the deployment target blocks outbound network access, both solving and sharing can still work as long as `/v2/solver` and `/v2/share/...` are handled locally.
 
 ## Recommended local testing model
 
