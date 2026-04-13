@@ -4,6 +4,9 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using SatisfactoryTools.Solver.Api.Contracts;
+using SatisfactoryTools.Solver.Api.Services;
 
 namespace SatisfactoryTools.Solver.Api.Tests;
 
@@ -352,6 +355,126 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	}
 
 	[Fact]
+	public async Task RecipeCostMultiplierLeavesPackagerRecipeInputsUnchanged()
+	{
+		var baseRequest = new
+		{
+			gameVersion = "1.2.0",
+			resourceMax = new Dictionary<string, double>
+			{
+				["Desc_Water_C"] = 1000d,
+			},
+			resourceWeight = new Dictionary<string, double>
+			{
+				["Desc_Water_C"] = 1d,
+			},
+			blockedResources = Array.Empty<string>(),
+			blockedRecipes = Array.Empty<string>(),
+			allowedAlternateRecipes = Array.Empty<string>(),
+			sinkableResources = Array.Empty<string>(),
+			production = new[]
+			{
+				new { item = "Desc_PackagedWater_C", type = "perMinute", amount = 60d, ratio = 100d },
+			},
+			input = new[]
+			{
+				new { item = "Desc_FluidCanister_C", amount = 60d },
+			},
+		};
+
+		var baseResponse = await client.PostAsJsonAsync("/v2/solver", baseRequest);
+		baseResponse.EnsureSuccessStatusCode();
+		var basePayload = await baseResponse.Content.ReadFromJsonAsync<SolverEnvelope>();
+		Assert.NotNull(basePayload?.Result);
+
+		var multipliedResponse = await client.PostAsJsonAsync("/v2/solver", new
+		{
+			baseRequest.gameVersion,
+			baseRequest.resourceMax,
+			baseRequest.resourceWeight,
+			baseRequest.blockedResources,
+			baseRequest.blockedRecipes,
+			baseRequest.allowedAlternateRecipes,
+			baseRequest.sinkableResources,
+			baseRequest.production,
+			baseRequest.input,
+			recipeCostMultiplier = 2d,
+		});
+
+		multipliedResponse.EnsureSuccessStatusCode();
+		var multipliedPayload = await multipliedResponse.Content.ReadFromJsonAsync<SolverEnvelope>();
+		Assert.NotNull(multipliedPayload?.Result);
+
+		Assert.Contains("Recipe_PackagedWater_C@100#Desc_Packager_C", basePayload!.Result!.Keys);
+		Assert.Contains("Recipe_PackagedWater_C@100#Desc_Packager_C", multipliedPayload!.Result!.Keys);
+		Assert.Equal(basePayload.Result["Desc_PackagedWater_C#Product"], multipliedPayload.Result["Desc_PackagedWater_C#Product"]);
+		Assert.InRange(basePayload.Result["Desc_Water_C#Mine"], 59.999d, 60.001d);
+		Assert.InRange(multipliedPayload.Result["Desc_Water_C#Mine"], 59.999d, 60.001d);
+		Assert.InRange(basePayload.Result["Desc_FluidCanister_C#Input"], 59.999d, 60.001d);
+		Assert.InRange(multipliedPayload.Result["Desc_FluidCanister_C#Input"], 59.999d, 60.001d);
+	}
+
+	[Fact]
+	public async Task RecipeCostMultiplierLeavesPackagerUnpackagingInputsUnchanged()
+	{
+		var baseRequest = new
+		{
+			gameVersion = "1.2.0",
+			resourceMax = new Dictionary<string, double>
+			{
+				["Desc_Water_C"] = 0d,
+			},
+			resourceWeight = new Dictionary<string, double>
+			{
+				["Desc_Water_C"] = 1d,
+			},
+			blockedResources = Array.Empty<string>(),
+			blockedRecipes = Array.Empty<string>(),
+			allowedAlternateRecipes = Array.Empty<string>(),
+			sinkableResources = Array.Empty<string>(),
+			production = new[]
+			{
+				new { item = "Desc_Water_C", type = "perMinute", amount = 120d, ratio = 100d },
+			},
+			input = new[]
+			{
+				new { item = "Desc_PackagedWater_C", amount = 120d },
+			},
+		};
+
+		var baseResponse = await client.PostAsJsonAsync("/v2/solver", baseRequest);
+		baseResponse.EnsureSuccessStatusCode();
+		var basePayload = await baseResponse.Content.ReadFromJsonAsync<SolverEnvelope>();
+		Assert.NotNull(basePayload?.Result);
+
+		var multipliedResponse = await client.PostAsJsonAsync("/v2/solver", new
+		{
+			baseRequest.gameVersion,
+			baseRequest.resourceMax,
+			baseRequest.resourceWeight,
+			baseRequest.blockedResources,
+			baseRequest.blockedRecipes,
+			baseRequest.allowedAlternateRecipes,
+			baseRequest.sinkableResources,
+			baseRequest.production,
+			baseRequest.input,
+			recipeCostMultiplier = 2d,
+		});
+
+		multipliedResponse.EnsureSuccessStatusCode();
+		var multipliedPayload = await multipliedResponse.Content.ReadFromJsonAsync<SolverEnvelope>();
+		Assert.NotNull(multipliedPayload?.Result);
+
+		Assert.Contains("Recipe_UnpackageWater_C@100#Desc_Packager_C", basePayload!.Result!.Keys);
+		Assert.Contains("Recipe_UnpackageWater_C@100#Desc_Packager_C", multipliedPayload!.Result!.Keys);
+		Assert.Equal(basePayload.Result["Desc_Water_C#Product"], multipliedPayload.Result["Desc_Water_C#Product"]);
+		Assert.InRange(basePayload.Result["Desc_PackagedWater_C#Input"], 119.999d, 120.001d);
+		Assert.InRange(multipliedPayload.Result["Desc_PackagedWater_C#Input"], 119.999d, 120.001d);
+		Assert.InRange(basePayload.Result["Desc_FluidCanister_C#Byproduct"], 119.999d, 120.001d);
+		Assert.InRange(multipliedPayload.Result["Desc_FluidCanister_C#Byproduct"], 119.999d, 120.001d);
+	}
+
+	[Fact]
 	public async Task RecipeCostMultiplierIsRejectedForVersion110()
 	{
 		var response = await client.PostAsJsonAsync("/v2/solver", new
@@ -501,6 +624,218 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	}
 
 	[Fact]
+	public async Task DebugPayloadExplainsDisabledAlternateForTurbofuel()
+	{
+		var response = await client.PostAsJsonAsync("/v2/solver", new
+		{
+			gameVersion = "1.2.0",
+			resourceMax = new Dictionary<string, double>
+			{
+				["Desc_OreIron_C"] = 92100d,
+				["Desc_OreCopper_C"] = 36900d,
+				["Desc_Stone_C"] = 69900d,
+				["Desc_Coal_C"] = 42300d,
+				["Desc_OreGold_C"] = 15000d,
+				["Desc_LiquidOil_C"] = 12600d,
+				["Desc_RawQuartz_C"] = 13500d,
+				["Desc_Sulfur_C"] = 10800d,
+				["Desc_OreBauxite_C"] = 12300d,
+				["Desc_OreUranium_C"] = 2100d,
+				["Desc_NitrogenGas_C"] = 12000d,
+				["Desc_SAM_C"] = 10200d,
+				["Desc_Water_C"] = double.MaxValue,
+			},
+			resourceWeight = new Dictionary<string, double>
+			{
+				["Desc_OreIron_C"] = 1d,
+				["Desc_OreCopper_C"] = 2.4959349593495936d,
+				["Desc_Stone_C"] = 1.3175965665236051d,
+				["Desc_Coal_C"] = 2.1773049645390072d,
+				["Desc_OreGold_C"] = 6.14d,
+				["Desc_LiquidOil_C"] = 7.30952380952381d,
+				["Desc_RawQuartz_C"] = 6.822222222222222d,
+				["Desc_Sulfur_C"] = 8.527777777777779d,
+				["Desc_OreBauxite_C"] = 7.487804878048781d,
+				["Desc_OreUranium_C"] = 43.85714285714286d,
+				["Desc_NitrogenGas_C"] = 7.675000000000001d,
+				["Desc_SAM_C"] = 9.029411764705882d,
+				["Desc_Water_C"] = 0d,
+			},
+			blockedResources = Array.Empty<string>(),
+			blockedRecipes = Array.Empty<string>(),
+			allowedAlternateRecipes = Array.Empty<string>(),
+			sinkableResources = Array.Empty<string>(),
+			production = new[]
+			{
+				new { item = "Desc_LiquidTurboFuel_C", type = "perMinute", amount = 1d, ratio = 100d },
+			},
+			input = Array.Empty<object>(),
+			debug = true,
+		});
+
+		response.EnsureSuccessStatusCode();
+		var payload = await response.Content.ReadFromJsonAsync<SolverEnvelope>();
+		Assert.NotNull(payload);
+		Assert.Empty(payload!.Result!);
+		Assert.NotNull(payload.Debug);
+		Assert.Equal("The current planner settings do not produce a feasible solution. Review the requested items and the reasons below.", payload.Debug!.Message);
+		var item = Assert.Single(payload.Debug.Items);
+		Assert.Equal("Desc_LiquidTurboFuel_C", item.Item);
+		Assert.Contains(item.Reasons, (reason) => reason.Contains("alternate recipe is not enabled", StringComparison.OrdinalIgnoreCase));
+	}
+
+	[Fact]
+	public async Task DebugPayloadExplainsZeroSamLimitForAiExpansionServer()
+	{
+		var response = await client.PostAsJsonAsync("/v2/solver", new
+		{
+			gameVersion = "1.2.0",
+			resourceMax = new Dictionary<string, double>
+			{
+				["Desc_OreIron_C"] = 92100d,
+				["Desc_OreCopper_C"] = 36900d,
+				["Desc_Stone_C"] = 69900d,
+				["Desc_Coal_C"] = 42300d,
+				["Desc_OreGold_C"] = 15000d,
+				["Desc_LiquidOil_C"] = 12600d,
+				["Desc_RawQuartz_C"] = 13500d,
+				["Desc_Sulfur_C"] = 10800d,
+				["Desc_OreBauxite_C"] = 12300d,
+				["Desc_OreUranium_C"] = 2100d,
+				["Desc_NitrogenGas_C"] = 12000d,
+				["Desc_SAM_C"] = 0d,
+				["Desc_Water_C"] = double.MaxValue,
+			},
+			resourceWeight = new Dictionary<string, double>
+			{
+				["Desc_OreIron_C"] = 1d,
+				["Desc_OreCopper_C"] = 2.4959349593495936d,
+				["Desc_Stone_C"] = 1.3175965665236051d,
+				["Desc_Coal_C"] = 2.1773049645390072d,
+				["Desc_OreGold_C"] = 6.14d,
+				["Desc_LiquidOil_C"] = 7.30952380952381d,
+				["Desc_RawQuartz_C"] = 6.822222222222222d,
+				["Desc_Sulfur_C"] = 8.527777777777779d,
+				["Desc_OreBauxite_C"] = 7.487804878048781d,
+				["Desc_OreUranium_C"] = 43.85714285714286d,
+				["Desc_NitrogenGas_C"] = 7.675000000000001d,
+				["Desc_SAM_C"] = 9.029411764705882d,
+				["Desc_Water_C"] = 0d,
+			},
+			blockedResources = Array.Empty<string>(),
+			blockedRecipes = Array.Empty<string>(),
+			allowedAlternateRecipes = Array.Empty<string>(),
+			sinkableResources = Array.Empty<string>(),
+			production = new[]
+			{
+				new { item = "Desc_SpaceElevatorPart_12_C", type = "perMinute", amount = 1d, ratio = 100d },
+			},
+			input = Array.Empty<object>(),
+			debug = true,
+		});
+
+		response.EnsureSuccessStatusCode();
+		var payload = await response.Content.ReadFromJsonAsync<SolverEnvelope>();
+		Assert.NotNull(payload);
+		Assert.Empty(payload!.Result!);
+		Assert.NotNull(payload.Debug);
+		var item = Assert.Single(payload.Debug!.Items);
+		Assert.Equal("Desc_SpaceElevatorPart_12_C", item.Item);
+		Assert.Contains(item.Reasons, (reason) => reason.Contains("SAM", StringComparison.OrdinalIgnoreCase) && reason.Contains("limit of 0", StringComparison.OrdinalIgnoreCase));
+	}
+
+	[Fact]
+	public async Task DebugPayloadPrioritizesDisabledTurbofuelProducerForPackagedTurbofuel()
+	{
+		var response = await client.PostAsJsonAsync("/v2/solver", new
+		{
+			gameVersion = "1.2.0",
+			resourceMax = new Dictionary<string, double>
+			{
+				["Desc_OreIron_C"] = 92100d,
+				["Desc_OreCopper_C"] = 36900d,
+				["Desc_Stone_C"] = 69900d,
+				["Desc_Coal_C"] = 42300d,
+				["Desc_OreGold_C"] = 15000d,
+				["Desc_LiquidOil_C"] = 12600d,
+				["Desc_RawQuartz_C"] = 13500d,
+				["Desc_Sulfur_C"] = 10800d,
+				["Desc_OreBauxite_C"] = 12300d,
+				["Desc_OreUranium_C"] = 2100d,
+				["Desc_NitrogenGas_C"] = 12000d,
+				["Desc_SAM_C"] = 10200d,
+				["Desc_Water_C"] = double.MaxValue,
+			},
+			resourceWeight = new Dictionary<string, double>
+			{
+				["Desc_OreIron_C"] = 1d,
+				["Desc_OreCopper_C"] = 2.4959349593495936d,
+				["Desc_Stone_C"] = 1.3175965665236051d,
+				["Desc_Coal_C"] = 2.1773049645390072d,
+				["Desc_OreGold_C"] = 6.14d,
+				["Desc_LiquidOil_C"] = 7.30952380952381d,
+				["Desc_RawQuartz_C"] = 6.822222222222222d,
+				["Desc_Sulfur_C"] = 8.527777777777779d,
+				["Desc_OreBauxite_C"] = 7.487804878048781d,
+				["Desc_OreUranium_C"] = 43.85714285714286d,
+				["Desc_NitrogenGas_C"] = 7.675000000000001d,
+				["Desc_SAM_C"] = 9.029411764705882d,
+				["Desc_Water_C"] = 0d,
+			},
+			blockedResources = Array.Empty<string>(),
+			blockedRecipes = Array.Empty<string>(),
+			allowedAlternateRecipes = Array.Empty<string>(),
+			sinkableResources = Array.Empty<string>(),
+			production = new[]
+			{
+				new { item = "Desc_TurboFuel_C", type = "perMinute", amount = 1d, ratio = 100d },
+			},
+			input = Array.Empty<object>(),
+			debug = true,
+		});
+
+		response.EnsureSuccessStatusCode();
+		var payload = await response.Content.ReadFromJsonAsync<SolverEnvelope>();
+		Assert.NotNull(payload);
+		Assert.Empty(payload!.Result!);
+		Assert.NotNull(payload.Debug);
+		var item = Assert.Single(payload.Debug!.Items);
+		Assert.Equal("Desc_TurboFuel_C", item.Item);
+		Assert.NotEmpty(item.Reasons);
+		Assert.Contains("alternate recipe is not enabled", item.Reasons[0], StringComparison.OrdinalIgnoreCase);
+		Assert.DoesNotContain("dependency cycle", item.Reasons[0], StringComparison.OrdinalIgnoreCase);
+	}
+
+	[Fact]
+	public void BiomassDebugExplainsManualInputRequirement()
+	{
+		var solver = factory.Services.GetRequiredService<ProductionPlannerSolver>();
+		var result = solver.Solve(new SolverRequest
+		{
+			GameVersion = "1.2.0",
+			ResourceMax = new Dictionary<string, double>
+			{
+				["Desc_Water_C"] = double.MaxValue,
+			},
+			ResourceWeight = new Dictionary<string, double>
+			{
+				["Desc_Water_C"] = 0d,
+			},
+			Production =
+			[
+				new SolverProductionItem { Item = "Desc_GenericBiomass_C", Type = "perMinute", Amount = 5d, Ratio = 100d },
+			],
+			Debug = true,
+		});
+
+		Assert.Empty(result.Result);
+		Assert.NotNull(result.Debug);
+		var item = Assert.Single(result.Debug!.Items);
+		Assert.Equal("Desc_GenericBiomass_C", item.Item);
+		Assert.Contains(item.Reasons, (reason) => reason.Contains("must be supplied as an input", StringComparison.OrdinalIgnoreCase));
+	}
+
+	[Fact]
 	public async Task ShareEndpointsRoundTripPlannerPayload()
 	{
 		var shareRoot = Path.Combine(Path.GetTempPath(), "satisfactorytools-share-tests", Guid.NewGuid().ToString("N"));
@@ -565,6 +900,19 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	{
 		public int Code { get; init; }
 		public Dictionary<string, double>? Result { get; init; }
+		public SolverDebugEnvelope? Debug { get; init; }
+	}
+
+	private sealed class SolverDebugEnvelope
+	{
+		public string Message { get; init; } = string.Empty;
+		public List<SolverDebugItemEnvelope> Items { get; init; } = [];
+	}
+
+	private sealed class SolverDebugItemEnvelope
+	{
+		public string Item { get; init; } = string.Empty;
+		public List<string> Reasons { get; init; } = [];
 	}
 
 	private sealed class ShareCreateEnvelope

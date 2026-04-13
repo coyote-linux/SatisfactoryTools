@@ -9,10 +9,11 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 	private const double SolveEpsilon = 1e-8;
 	private const double DefaultMultiplier = 1d;
 	private const double BuildingTieBreakerWeight = 0.001d;
+	private const string PackagerClassName = "Desc_Packager_C";
 	private const string ProductionPerMinute = "perMinute";
 	private const string ProductionMax = "max";
 
-	public IReadOnlyDictionary<string, double> Solve(SolverRequest request)
+	public SolverExecutionResult Solve(SolverRequest request)
 	{
 		ValidateRequest(request);
 
@@ -144,25 +145,28 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 			ReferenceEqualityComparer.Instance);
 
 		LinearSolver.ResultStatus status;
+		var phase = hasMaxOutputs ? "maximize requested outputs" : "minimize raw resources";
 		if (hasMaxOutputs) {
 			status = SolvePhase(solver, maximizeObjective, maximize: true, allObjectiveVariables);
 			if (status is not LinearSolver.ResultStatus.OPTIMAL and not LinearSolver.ResultStatus.FEASIBLE) {
-				return new SortedDictionary<string, double>(StringComparer.Ordinal);
+				return CreateFailedExecutionResult(request, data, solver, status, phase);
 			}
 
 			BindObjectiveValue(solver, maximizeObjective, CalculateObjectiveValue(maximizeObjective), maximize: true, "MaxOutputObjective");
 		}
 
+		phase = "minimize raw resources";
 		status = SolvePhase(solver, resourceObjective, maximize: false, allObjectiveVariables);
 		if (status is not LinearSolver.ResultStatus.OPTIMAL and not LinearSolver.ResultStatus.FEASIBLE) {
-			return new SortedDictionary<string, double>(StringComparer.Ordinal);
+			return CreateFailedExecutionResult(request, data, solver, status, phase);
 		}
 
 		BindObjectiveValue(solver, resourceObjective, CalculateObjectiveValue(resourceObjective), maximize: false, "ResourceObjective");
 
+		phase = "minimize power usage";
 		status = SolvePhase(solver, powerObjective, maximize: false, allObjectiveVariables);
 		if (status is not LinearSolver.ResultStatus.OPTIMAL and not LinearSolver.ResultStatus.FEASIBLE) {
-			return new SortedDictionary<string, double>(StringComparer.Ordinal);
+			return CreateFailedExecutionResult(request, data, solver, status, phase);
 		}
 
 		var result = new SortedDictionary<string, double>(StringComparer.Ordinal);
@@ -188,7 +192,9 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 			TryAdd(result, recipe.ResponseKey, variable.SolutionValue());
 		}
 
-		return result;
+		return new SolverExecutionResult {
+			Result = result,
+		};
 	}
 
 	private static void ValidateRequest(SolverRequest request)
@@ -242,7 +248,7 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 			var building = data.Buildings[machineClass];
 			var baseRate = building.Metadata.ManufacturingSpeed * (60d / recipe.Time);
 			var productRates = recipe.Products.ToDictionary((entry) => entry.Item, (entry) => entry.Amount * baseRate, StringComparer.Ordinal);
-			var ingredientRates = recipe.Ingredients.ToDictionary((entry) => entry.Item, (entry) => ScaleIngredientRequirement(entry.Amount, recipeCostMultiplier, data.Items[entry.Item].Liquid) * baseRate, StringComparer.Ordinal);
+			var ingredientRates = recipe.Ingredients.ToDictionary((entry) => entry.Item, (entry) => ScaleIngredientRequirement(entry.Amount, recipeCostMultiplier, data.Items[entry.Item].Liquid, machineClass) * baseRate, StringComparer.Ordinal);
 			var powerCost = GetPowerCost(recipe, building);
 
 			recipes.Add(new AllowedRecipe(recipe, machineClass, ingredientRates, productRates, powerCost));
@@ -324,8 +330,12 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 		return Math.Max(building.Metadata.PowerConsumption, 0);
 	}
 
-	private static double ScaleIngredientRequirement(double amount, double recipeCostMultiplier, bool isLiquid)
+	private static double ScaleIngredientRequirement(double amount, double recipeCostMultiplier, bool isLiquid, string machineClass)
 	{
+		if (machineClass == PackagerClassName) {
+			return amount;
+		}
+
 		var scaledAmount = amount * recipeCostMultiplier;
 		if (isLiquid) {
 			return scaledAmount;
@@ -360,6 +370,225 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 		return value.Value;
 	}
 
+	private static SolverExecutionResult CreateFailedExecutionResult(
+		SolverRequest request,
+		GameDataDocument data,
+		LinearSolver solver,
+		LinearSolver.ResultStatus status,
+		string phase)
+	{
+		return new SolverExecutionResult {
+			Debug = request.Debug ? BuildDebugInfo(request, data, solver, status, phase) : null,
+		};
+	}
+
+	private static SolverDebugInfo BuildDebugInfo(
+		SolverRequest request,
+		GameDataDocument data,
+		LinearSolver solver,
+		LinearSolver.ResultStatus status,
+		string phase)
+	{
+		var rawResourceItems = data.Resources.Values
+			.Select((resource) => resource.Item)
+			.ToHashSet(StringComparer.Ordinal);
+		var blockedResources = request.BlockedResources.ToHashSet(StringComparer.Ordinal);
+		var availableItems = rawResourceItems
+			.Where((item) => !blockedResources.Contains(item) && request.ResourceMax.GetValueOrDefault(item, 0) > SolveEpsilon)
+			.ToHashSet(StringComparer.Ordinal);
+
+		foreach (var input in request.Input.Where((item) => item.Item is not null && item.Amount > SolveEpsilon)) {
+			availableItems.Add(input.Item!);
+		}
+
+		var recipesByProduct = BuildRecipeAvailability(request, data);
+		var memo = new Dictionary<string, ItemReachability>(StringComparer.Ordinal);
+		var items = request.Production
+			.Where((item) => item.Item is not null)
+			.GroupBy((item) => item.Item!, StringComparer.Ordinal)
+			.Select((group) => {
+				var item = group.Key;
+				var analysis = AnalyzeItemReachability(item, data, recipesByProduct, rawResourceItems, availableItems, blockedResources, request.ResourceMax, memo, new HashSet<string>(StringComparer.Ordinal));
+				return new SolverDebugItemInfo {
+					Item = item,
+					Name = GetItemName(data, item),
+					Reachable = analysis.Reachable,
+					Reasons = analysis.Reasons.ToList(),
+				};
+			})
+			.ToList();
+
+		return new SolverDebugInfo {
+			Status = status.ToString(),
+			Phase = phase,
+			Message = "The current planner settings do not produce a feasible solution. Review the requested items and the reasons below.",
+			SolverVersion = solver.SolverVersion(),
+			VariableCount = solver.NumVariables(),
+			ConstraintCount = solver.NumConstraints(),
+			WallTimeMs = solver.WallTime(),
+			Iterations = solver.Iterations(),
+			Nodes = solver.Nodes(),
+			Items = items,
+		};
+	}
+
+	private static Dictionary<string, List<RecipeAvailability>> BuildRecipeAvailability(SolverRequest request, GameDataDocument data)
+	{
+		var blockedRecipes = request.BlockedRecipes.ToHashSet(StringComparer.Ordinal);
+		var allowedAlternates = request.AllowedAlternateRecipes.ToHashSet(StringComparer.Ordinal);
+		var recipesByProduct = new Dictionary<string, List<RecipeAvailability>>(StringComparer.Ordinal);
+
+		foreach (var recipe in data.Recipes.Values) {
+			if (!recipe.InMachine || recipe.ForBuilding) {
+				continue;
+			}
+
+			var disabledReasons = new List<string>();
+			if (recipe.Alternate && !allowedAlternates.Contains(recipe.ClassName)) {
+				disabledReasons.Add("its alternate recipe is not enabled");
+			}
+			if (!recipe.Alternate && blockedRecipes.Contains(recipe.ClassName)) {
+				disabledReasons.Add("the recipe is blocked");
+			}
+
+			var machineClass = recipe.ProducedIn.FirstOrDefault((candidate) =>
+				data.Buildings.TryGetValue(candidate, out var building)
+				&& building.Metadata.ManufacturingSpeed > SolveEpsilon);
+			if (machineClass is null) {
+				disabledReasons.Add("no supported production machine is available");
+			}
+
+			var availability = new RecipeAvailability(recipe, disabledReasons);
+			foreach (var product in recipe.Products) {
+				if (!recipesByProduct.TryGetValue(product.Item, out var recipes)) {
+					recipes = [];
+					recipesByProduct[product.Item] = recipes;
+				}
+
+				recipes.Add(availability);
+			}
+		}
+
+		return recipesByProduct;
+	}
+
+	private static ItemReachability AnalyzeItemReachability(
+		string item,
+		GameDataDocument data,
+		IReadOnlyDictionary<string, List<RecipeAvailability>> recipesByProduct,
+		ISet<string> rawResourceItems,
+		ISet<string> availableItems,
+		ISet<string> blockedResources,
+		IReadOnlyDictionary<string, double> resourceMax,
+		IDictionary<string, ItemReachability> memo,
+		HashSet<string> stack)
+	{
+		if (memo.TryGetValue(item, out var cached)) {
+			return cached;
+		}
+
+		if (!stack.Add(item)) {
+			return new ItemReachability(false, [$"A dependency cycle was detected while tracing '{GetItemName(data, item)}'."]);
+		}
+
+		try {
+			if (availableItems.Contains(item)) {
+				var reachable = new ItemReachability(true, [$"'{GetItemName(data, item)}' is already available from configured raw resources or planner inputs."]);
+				memo[item] = reachable;
+				return reachable;
+			}
+
+			if (rawResourceItems.Contains(item)) {
+				var isBlocked = blockedResources.Contains(item);
+				var resourceLimit = resourceMax.GetValueOrDefault(item, 0);
+				var reason = isBlocked
+					? $"Raw resource '{GetItemName(data, item)}' is disabled in the planner settings."
+					: $"Raw resource '{GetItemName(data, item)}' has a limit of {resourceLimit} in this tab.";
+				var rawResult = new ItemReachability(false, [reason]);
+				memo[item] = rawResult;
+				return rawResult;
+			}
+
+			if (!recipesByProduct.TryGetValue(item, out var recipes) || recipes.Count == 0) {
+				var noRecipe = new ItemReachability(false, [GetNoRecipeReason(item, data)]);
+				memo[item] = noRecipe;
+				return noRecipe;
+			}
+
+			var reasons = new List<string>();
+			var enabledRecipes = recipes
+				.Where((recipe) => recipe.DisabledReasons.Count == 0)
+				.OrderBy((recipe) => recipe.Recipe.Alternate)
+				.Take(3)
+				.ToList();
+			foreach (var availability in enabledRecipes) {
+
+				var missingIngredientReasons = new List<string>();
+				foreach (var ingredient in availability.Recipe.Ingredients) {
+					var ingredientAnalysis = AnalyzeItemReachability(ingredient.Item, data, recipesByProduct, rawResourceItems, availableItems, blockedResources, resourceMax, memo, stack);
+					if (!ingredientAnalysis.Reachable) {
+						missingIngredientReasons.Add($"{GetItemName(data, ingredient.Item)}: {GetPreferredReason(ingredientAnalysis.Reasons)}");
+					}
+				}
+
+				if (missingIngredientReasons.Count == 0) {
+					var reachable = new ItemReachability(true, [$"Reachable through recipe '{availability.Recipe.Name}'."]);
+					memo[item] = reachable;
+					return reachable;
+				}
+
+				reasons.Add($"Recipe '{availability.Recipe.Name}' cannot run because {JoinReasonList(missingIngredientReasons)}.");
+			}
+
+			foreach (var availability in recipes.Where((recipe) => recipe.DisabledReasons.Count > 0).OrderBy((recipe) => recipe.Recipe.Alternate).Take(3)) {
+				reasons.Add($"Recipe '{availability.Recipe.Name}' is unavailable because {JoinReasonList(availability.DisabledReasons)}.");
+			}
+
+			if (reasons.Count == 0) {
+				reasons.Add($"No enabled production path could be found for '{GetItemName(data, item)}'.");
+			}
+
+			var unreachable = new ItemReachability(false, reasons
+				.Distinct(StringComparer.Ordinal)
+				.OrderBy(IsCycleReason)
+				.Take(5)
+				.ToList());
+			memo[item] = unreachable;
+			return unreachable;
+		} finally {
+			stack.Remove(item);
+		}
+	}
+
+	private static string GetItemName(GameDataDocument data, string item)
+	{
+		return data.Items.TryGetValue(item, out var schema) ? schema.Name : item;
+	}
+
+	private static string GetNoRecipeReason(string item, GameDataDocument data)
+	{
+		if (data.Recipes.Values.Any((recipe) => recipe.Ingredients.Any((ingredient) => ingredient.Item == item))) {
+			return $"'{GetItemName(data, item)}' has no machine recipe in the planner and must be supplied as an input.";
+		}
+
+		return $"No machine recipe can produce '{GetItemName(data, item)}'.";
+	}
+
+	private static string JoinReasonList(IEnumerable<string> reasons)
+	{
+		return string.Join("; ", reasons.Take(3));
+	}
+
+	private static string GetPreferredReason(IReadOnlyList<string> reasons)
+	{
+		return reasons.FirstOrDefault((reason) => !IsCycleReason(reason)) ?? reasons[0];
+	}
+
+	private static bool IsCycleReason(string reason)
+	{
+		return reason.Contains("dependency cycle", StringComparison.OrdinalIgnoreCase);
+	}
+
 	private sealed record AllowedRecipe(
 		GameRecipe Recipe,
 		string MachineClass,
@@ -369,6 +598,14 @@ public sealed class ProductionPlannerSolver(GameDataCatalog gameDataCatalog)
 	{
 		public string ResponseKey => Recipe.ClassName + "@100#" + MachineClass;
 	}
+
+	private sealed record RecipeAvailability(
+		GameRecipe Recipe,
+		IReadOnlyList<string> DisabledReasons);
+
+	private sealed record ItemReachability(
+		bool Reachable,
+		IReadOnlyList<string> Reasons);
 
 	private sealed class ReferenceEqualityComparer : IEqualityComparer<Variable>
 	{
