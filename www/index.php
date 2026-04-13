@@ -14,7 +14,7 @@
 	<meta name="msapplication-TileColor" content="#da532c">
 	<meta name="msapplication-config" content="/assets/images/icons/browserconfig.xml">
 	<!-- Primary Meta Tags -->
-	<meta name="theme-color" content="#df691a">
+	<meta name="theme-color" content="#ff8c00">
 	<meta name="title" content="Satisfactory Tools" />
 	<meta name="type" content="website" />
 	<meta name="image" content="https://ficsit.spugnort.com/assets/images/icons/android-chrome-512x512.png" />
@@ -40,13 +40,13 @@
 		/* for faster loading */
 		body {
 			margin: 0;
-			font-family: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+			font-family: system-ui, -apple-system, sans-serif;
 			font-size: 1rem;
 			font-weight: 400;
 			line-height: 1.5;
-			color: #EBEBEB;
+			color: #e0e0e0;
 			text-align: left;
-			background-color: #2B3E50;
+			background-color: #0d0d0d;
 		}
 
 		.fullscreen-loader {
@@ -56,7 +56,7 @@
 			right: 0;
 			bottom: 0;
 			display: flex;
-			background-color: #2B3E50;
+			background-color: #0d0d0d;
 
 			align-items: center;
 			justify-content: center;
@@ -91,11 +91,13 @@
 
 		.fullscreen-loader .loader {
 			font-size: 50px;
+			color: #ff8c00;
 		}
 
 		.fullscreen-loader .loader-text, .fullscreen-loader .loader-text span {
 			margin-top: 20px;
 			font-size: 32px;
+			color: #ff8c00;
 		}
 	</style>
 	<link rel="stylesheet" href="/assets/css/fontawesome.min.css">
