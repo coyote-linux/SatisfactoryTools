@@ -27,6 +27,31 @@ $border: 1px solid $gray-400;
 	border: 1px solid $gray-400;
 	background-color: $gray-200;
 	color: $gray-100;
+
+	.solver-debug-card {
+		border: 1px solid color.adjust($primary, $lightness: -10%);
+		box-shadow: 0 0 0 1px rgba($primary, 0.2);
+
+		.card-header,
+		.card-body,
+		.solver-debug-description {
+			color: $gray-100;
+		}
+
+		.solver-debug-output {
+			margin-top: 0.5rem;
+			padding: 1rem;
+			border: 1px solid rgba($gray-100, 0.18);
+			border-radius: 0.35rem;
+			background-color: rgba($gray-100, 0.08);
+			color: $gray-100;
+			font-size: 0.95rem;
+			line-height: 1.55;
+			white-space: pre-wrap;
+			word-break: break-word;
+			text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+		}
+	}
 }
 
 .production-nav-tabs {

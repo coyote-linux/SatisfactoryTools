@@ -82,8 +82,10 @@ html {
 
 .navbar-brand img {
 	height: 40px;
-	width: 40px;
+	width: auto;
+	max-width: none;
 	border-radius: 4px;
+	object-fit: contain;
 }
 
 .navbar-nav .nav-link {
