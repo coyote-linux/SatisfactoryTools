@@ -70,12 +70,13 @@ These JSON files are imported into the webpack bundle at build time, so a normal
 - `SolverService/SatisfactoryTools.Solver.Api` is the new local replacement solver service. It uses OR-Tools and consumes the same `data/data1.0*.json` assets as the frontend.
 - Shared planner imports also rely on the remote API namespace (`/v2/share/...`).
 
-The planner is now split across two backends:
+The planner currently expects both solving and sharing to live under the same-origin `/v2/*` namespace.
 
-- solving can be provided locally by the C# service
-- sharing still depends on the hosted `/v2/share/...` API
+- `src/Solver/Solver.ts` defaults browser solve requests to `/v2/solver` unless `www/index.php` injects an override.
+- `ProductionTab.ts` posts share creates to `/v2/share/?version=...`.
+- `ProductionController.ts` loads shared plans from `/v2/share/{shareId}`.
 
-For deployment, the frontend can run without the local solver service only if it still has access to a compatible external `/v2/solver` endpoint.
+For deployment, the frontend can run without the local solver service only if the served origin still exposes compatible `/v2/solver` and `/v2/share/...` endpoints.
 
 ## Build and asset pipeline
 
@@ -119,10 +120,10 @@ These scripts are content-maintenance tools, not part of the minimum runtime nee
 
 ### External dependencies at runtime
 
-- Public deployments typically inject a same-origin solver endpoint such as `/v2/solver` through `www/index.php`, with Apache or another reverse proxy forwarding those requests to the local ASP.NET solver service.
-- Public deployments should also expose the local share endpoints on the same origin (`/v2/share/...`) so planner sharing does not depend on upstream hosted APIs.
+- Public deployments typically expose same-origin `/v2/solver` and `/v2/share/...` endpoints, with Apache or another reverse proxy forwarding those requests to the local ASP.NET service.
+- `www/index.php` can still inject an alternate solver URL when needed, but the planner's normal compatibility model is same-origin `/v2/*`.
 
-In local development, `www/index.php` can inject a custom solver URL so the browser targets the local C# service instead of any hosted solver.
+In local development, the recommended path is to proxy same-origin `/v2/*` requests from the PHP/Apache web server to the local ASP.NET service.
 
 If the deployment target blocks outbound network access, both solving and sharing can still work as long as `/v2/solver` and `/v2/share/...` are handled locally.
 
@@ -135,9 +136,10 @@ For local testing, use one process to build the bundle and one PHP/Apache web se
 The repository includes a simple `docker-compose.yml` for local testing.
 
 - `builder` uses Node 24 and runs `yarn install` plus `yarn build` against the repository root.
-- `solver` uses the .NET 10 SDK image and runs the local C# `/v2/solver` service from `SolverService/`.
+- `solver` uses the .NET 10 SDK image and runs the local C# `/v2/*` compatibility service from `SolverService/`.
 - `web` uses the official `php:8.2-apache` image and serves `www/` directly from `/var/www/html`.
-- `web` injects `SOLVER_URL=http://localhost:8081/v2/solver` into `www/index.php`, so the browser targets the local solver service during Docker testing.
+- `web` enables `mod_proxy` and uses `docker/apache/local-v2-proxy.conf` to forward same-origin `/v2/solver` and `/v2/share/*` traffic to `http://solver:8080`.
+- `solver` stores compose-local share payloads under `/tmp/satisfactorytools-share-store` so share creation/loading works during a compose session.
 - Apache reads the existing `www/.htaccess`, so HTML5 routes continue to fall back to `index.php`.
 
 Start the app with:

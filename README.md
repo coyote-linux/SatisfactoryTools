@@ -25,6 +25,16 @@ Any pull requests are welcome, though some rules must be followed:
 ## Development
 Run `yarn start` to start the automated build process. It will watch over the code and rebuild it on change.
 
+For local same-origin planner testing, `docker compose up` now starts:
+
+- a Node builder that produces `www/assets/app.js`,
+- the local ASP.NET solver/share service on the internal `solver:8080`, and
+- a PHP/Apache web container on `http://localhost:8080/` that reverse-proxies same-origin `/v2/solver` and `/v2/share/*` to that solver container.
+
+This means the browser can use the frontend's default same-origin `/v2/*` paths during local testing, including planner share creation/loading, without editing `www/index.php`.
+
+The web container only waits for `www/assets/app.js` to exist before Apache starts. If you want to guarantee that Compose is serving a freshly rebuilt frontend bundle rather than a previously generated local file, rerun `yarn build` first or remove `www/assets/app.js` before `docker compose up`.
+
 ## Updating data
 Get the latest Docs.json from your game installation and place it into `data` folder.
 Then run `yarn parseDocs`command and the `data.json` file would get updated automatically.
