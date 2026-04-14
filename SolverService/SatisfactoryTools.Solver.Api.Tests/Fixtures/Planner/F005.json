@@ -1,0 +1,81 @@
+{
+  "id": "F005",
+  "scenario": "1.2 recipe multiplier parity",
+  "routeVersion": "1.2",
+  "routePath": "/1.2/production",
+  "storageKey": "production12",
+  "uiState": {
+    "showDebugOutput": false
+  },
+  "plannerState": {
+    "metadata": {
+      "name": "Fixture F005 - Multiplied Iron Plates",
+      "icon": "Desc_IronPlate_C",
+      "schemaVersion": 1,
+      "gameVersion": "1.2"
+    },
+    "request": {
+      "resourceMax": {
+        "Desc_OreIron_C": 1000,
+        "Desc_Water_C": 0
+      },
+      "resourceWeight": {
+        "Desc_OreIron_C": 1,
+        "Desc_Water_C": 0
+      },
+      "blockedResources": [],
+      "blockedRecipes": [],
+      "blockedMachines": [],
+      "allowedAlternateRecipes": [],
+      "recipeCostMultiplier": 2,
+      "powerConsumptionMultiplier": 1,
+      "sinkableResources": [],
+      "production": [
+        {
+          "item": "Desc_IronPlate_C",
+          "type": "perMinute",
+          "amount": 40,
+          "ratio": 100
+        }
+      ],
+      "input": []
+    }
+  },
+  "solverRequest": {
+    "gameVersion": "1.2.0",
+    "resourceMax": {
+      "Desc_OreIron_C": 1000,
+      "Desc_Water_C": 0
+    },
+    "resourceWeight": {
+      "Desc_OreIron_C": 1,
+      "Desc_Water_C": 0
+    },
+    "blockedResources": [],
+    "blockedRecipes": [],
+    "allowedAlternateRecipes": [],
+    "sinkableResources": [],
+    "production": [
+      {
+        "item": "Desc_IronPlate_C",
+        "type": "perMinute",
+        "amount": 40,
+        "ratio": 100
+      }
+    ],
+    "input": [],
+    "recipeCostMultiplier": 2,
+    "debug": false
+  },
+  "solveExpectation": {
+    "resultStatus": "RESULT",
+    "resultKeysPresent": [
+      "Desc_OreIron_C#Mine",
+      "Desc_IronPlate_C#Product"
+    ],
+    "resultValues": {
+      "Desc_OreIron_C#Mine": 240,
+      "Desc_IronPlate_C#Product": 40
+    }
+  }
+}

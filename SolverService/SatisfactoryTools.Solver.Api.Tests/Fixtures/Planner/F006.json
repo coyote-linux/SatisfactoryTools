@@ -1,0 +1,90 @@
+{
+  "id": "F006",
+  "scenario": "1.2 packager multiplier exception",
+  "routeVersion": "1.2",
+  "routePath": "/1.2/production",
+  "storageKey": "production12",
+  "uiState": {
+    "showDebugOutput": false
+  },
+  "plannerState": {
+    "metadata": {
+      "name": "Fixture F006 - Packaged Water",
+      "icon": "Desc_PackagedWater_C",
+      "schemaVersion": 1,
+      "gameVersion": "1.2"
+    },
+    "request": {
+      "resourceMax": {
+        "Desc_Water_C": 1000
+      },
+      "resourceWeight": {
+        "Desc_Water_C": 1
+      },
+      "blockedResources": [],
+      "blockedRecipes": [],
+      "blockedMachines": [],
+      "allowedAlternateRecipes": [],
+      "recipeCostMultiplier": 2,
+      "powerConsumptionMultiplier": 1,
+      "sinkableResources": [],
+      "production": [
+        {
+          "item": "Desc_PackagedWater_C",
+          "type": "perMinute",
+          "amount": 60,
+          "ratio": 100
+        }
+      ],
+      "input": [
+        {
+          "item": "Desc_FluidCanister_C",
+          "amount": 60
+        }
+      ]
+    }
+  },
+  "solverRequest": {
+    "gameVersion": "1.2.0",
+    "resourceMax": {
+      "Desc_Water_C": 1000
+    },
+    "resourceWeight": {
+      "Desc_Water_C": 1
+    },
+    "blockedResources": [],
+    "blockedRecipes": [],
+    "allowedAlternateRecipes": [],
+    "sinkableResources": [],
+    "production": [
+      {
+        "item": "Desc_PackagedWater_C",
+        "type": "perMinute",
+        "amount": 60,
+        "ratio": 100
+      }
+    ],
+    "input": [
+      {
+        "item": "Desc_FluidCanister_C",
+        "amount": 60
+      }
+    ],
+    "recipeCostMultiplier": 2,
+    "debug": false
+  },
+  "solveExpectation": {
+    "resultStatus": "RESULT",
+    "resultKeysPresent": [
+      "Recipe_PackagedWater_C@100#Desc_Packager_C",
+      "Desc_PackagedWater_C#Product",
+      "Desc_Water_C#Mine",
+      "Desc_FluidCanister_C#Input"
+    ],
+    "resultValues": {
+      "Desc_PackagedWater_C#Product": 60,
+      "Desc_Water_C#Mine": 60,
+      "Desc_FluidCanister_C#Input": 60
+    }
+  }
+}

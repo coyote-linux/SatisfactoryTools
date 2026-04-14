@@ -1,0 +1,45 @@
+{
+  "id": "F004",
+  "scenario": "1.2 share round-trip",
+  "routeVersion": "1.2",
+  "routePath": "/1.2/production",
+  "storageKey": "production12",
+  "uiState": {
+    "showDebugOutput": false
+  },
+  "plannerState": {
+    "metadata": {
+      "name": "Shared Motor Plan",
+      "icon": "Desc_Motor_C",
+      "schemaVersion": 1,
+      "gameVersion": "1.2"
+    },
+    "request": {
+      "resourceMax": {},
+      "resourceWeight": {},
+      "blockedResources": [],
+      "blockedRecipes": [],
+      "blockedMachines": [],
+      "allowedAlternateRecipes": [],
+      "recipeCostMultiplier": 1,
+      "powerConsumptionMultiplier": 1,
+      "sinkableResources": [],
+      "production": [
+        {
+          "item": "Desc_Motor_C",
+          "type": "perMinute",
+          "amount": 10,
+          "ratio": 100
+        }
+      ],
+      "input": []
+    }
+  },
+  "shareExpectation": {
+    "createQueryVersion": "1.2",
+    "expectedLinkPrefix": "/1.2/production?share=",
+    "loadedMetadataName": "Shared Motor Plan",
+    "loadedMetadataGameVersion": "1.2",
+    "loadedFirstProductionItem": "Desc_Motor_C"
+  }
+}
