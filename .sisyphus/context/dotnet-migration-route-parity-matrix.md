@@ -19,6 +19,44 @@ Track route-by-route migration from AngularJS ownership to ASP.NET Core ownershi
 | Solver API | ASP.NET Core | `SolverService/.../Program.cs` | ASP.NET Core | M0-M8 | preserve `/v2/solver` contract | Preserved |
 | Share API | ASP.NET Core | `SolverService/.../Program.cs`, `ShareStore.cs` | ASP.NET Core | M0-M8 | preserve `/v2/share` contract and share-link format | Preserved |
 
+## Current Angular State Inventory
+
+| State | URL | Parent | Abstract | Notes |
+|---|---|---|---|---|
+| `root` | `` | none | yes | shell root using `root.html` |
+| `page_content` | `` | `root` | yes | top-level page wrapper and breadcrumb container |
+| `version` | `/{version}?share={shareId}` | `page_content` | yes | version wrapper; onEnter sets breadcrumb label from normalized version |
+| `listing` | `` | `version` | yes | shared listing/content wrapper |
+| `home` | `/` | `listing` | no | homepage |
+| `codex` | `/codex` | `listing` | yes | codex wrapper |
+| `schematics` | `/schematics` | `codex` | no | schematic listing |
+| `schematic` | `/{item}` | `schematics` | no | schematic detail |
+| `buildings` | `/buildings` | `codex` | no | building listing |
+| `building` | `/{item}` | `buildings` | no | building detail |
+| `items` | `/items` | `codex` | no | item listing |
+| `item` | `/{item}` | `items` | no | item detail |
+| `production` | `/production` | `listing` | no | production planner |
+
+## Version Facts To Preserve
+
+1. Supported versions are `1.1`, `1.1-ficsmas`, and `1.2`.
+2. Default version is `1.1`.
+3. Version normalization rules are:
+   - `1.0 -> 1.1`
+   - `1.0-ficsmas -> 1.1-ficsmas`
+   - supported versions pass through unchanged
+   - unsupported values normalize to `1.1`
+4. `1.1-ficsmas` displays as `1.1 (Ficsmas)` in the UI label.
+5. Startup and route transitions both re-normalize the active version and re-run `DataProvider.change(version)`.
+6. `DataProvider.change(version)` maps:
+   - `1.1-ficsmas` and `1.0-ficsmas` to `data1.0-ficsmas.json`
+   - everything else to `data1.0.json`
+
+## Migration Notes
+
+1. The route/state inventory above comes directly from `src/Module/AppModule.ts` and is the source of truth for route parity planning.
+2. The `version` state advertises query param `shareId`, while the current share loader in `ProductionController` reads `share` from `$location.search()`. Preserve current observable behavior first; cleanup can be a later deliberate change.
+
 ## Notes
 
 1. This matrix should be updated whenever route ownership changes.
