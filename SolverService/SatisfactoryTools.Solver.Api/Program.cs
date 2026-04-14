@@ -16,11 +16,13 @@ builder.Services.AddCors((options) =>
 });
 
 builder.Services.AddSingleton<GameDataCatalog>();
+builder.Services.AddSingleton<HostRouteOwnershipPolicy>();
 builder.Services.AddSingleton<SpaShellRenderer>();
 builder.Services.AddSingleton<ProductionPlannerSolver>();
 builder.Services.AddSingleton<ShareStore>();
 
 var app = builder.Build();
+var hostRouteOwnershipPolicy = app.Services.GetRequiredService<HostRouteOwnershipPolicy>();
 var shellRenderer = app.Services.GetRequiredService<SpaShellRenderer>();
 
 app.UseCors();
@@ -38,15 +40,7 @@ app.Use(async (HttpContext context, Func<Task> next) =>
 		return;
 	}
 
-	if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method)) {
-		return;
-	}
-
-	if (context.Request.Path.StartsWithSegments("/v2", StringComparison.OrdinalIgnoreCase)) {
-		return;
-	}
-
-	if (Path.HasExtension(context.Request.Path) && !IsSupportedVersionRoot(context.Request.Path)) {
+	if (!hostRouteOwnershipPolicy.IsLegacyShellFallbackEligible(context.Request)) {
 		return;
 	}
 
@@ -122,11 +116,6 @@ static FileExtensionContentTypeProvider CreateContentTypeProvider()
 	var provider = new FileExtensionContentTypeProvider();
 	provider.Mappings[".webmanifest"] = "application/manifest+json";
 	return provider;
-}
-
-static bool IsSupportedVersionRoot(PathString requestPath)
-{
-	return requestPath.Value is "/1.0" or "/1.0-ficsmas" or "/1.1" or "/1.1-ficsmas" or "/1.2";
 }
 
 app.Run();
