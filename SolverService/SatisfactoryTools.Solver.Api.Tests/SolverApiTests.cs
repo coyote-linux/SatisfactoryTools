@@ -26,42 +26,32 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 	public static IEnumerable<object[]> PlannerFixtureIds()
 	{
-		for (var index = 1; index <= 8; index++) {
-			yield return [$"F{index:000}"];
-		}
+		return PlannerFixtureSupport.PlannerFixtureIds();
 	}
 
 	public static IEnumerable<object[]> PlannerFixtureIdsWithSolverRequest()
 	{
-		foreach (var fixtureId in PlannerFixtureIds().Select((entry) => (string)entry[0])) {
-			if (LoadPlannerFixture(fixtureId).SolverRequest is not null) {
-				yield return [fixtureId];
-			}
-		}
+		return PlannerFixtureSupport.PlannerFixtureIdsWithSolverRequest();
 	}
 
 	public static IEnumerable<object[]> PlannerFixtureIdsWithShareExpectation()
 	{
-		foreach (var fixtureId in PlannerFixtureIds().Select((entry) => (string)entry[0])) {
-			if (LoadPlannerFixture(fixtureId).ShareExpectation is not null) {
-				yield return [fixtureId];
-			}
-		}
+		return PlannerFixtureSupport.PlannerFixtureIdsWithShareExpectation();
 	}
 
 	[Theory]
 	[MemberData(nameof(PlannerFixtureIds))]
 	public void PlannerFixturesMatchCurrentRouteAndStorageParity(string fixtureId)
 	{
-		var fixture = LoadPlannerFixture(fixtureId);
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture(fixtureId);
 
 		Assert.Equal($"/{fixture.RouteVersion}/production", fixture.RoutePath);
-		Assert.Equal(GetExpectedStorageKey(fixture.RouteVersion), fixture.StorageKey);
+		Assert.Equal(PlannerFixtureSupport.GetExpectedStorageKey(fixture.RouteVersion), fixture.StorageKey);
 		Assert.Equal(fixture.RouteVersion, fixture.PlannerState.Metadata.GameVersion);
 		Assert.Equal(fixture.UiState.ShowDebugOutput, fixture.SolverRequest?.Debug ?? false);
 
 		if (fixture.SolverRequest is not null) {
-			Assert.Equal(GetExpectedSolverGameVersion(fixture.RouteVersion), fixture.SolverRequest.GameVersion);
+			Assert.Equal(PlannerFixtureSupport.GetExpectedSolverGameVersion(fixture.RouteVersion), fixture.SolverRequest.GameVersion);
 			Assert.Null(fixture.SolverRequest.PowerConsumptionMultiplier);
 
 			if (fixture.RouteVersion == "1.2") {
@@ -76,7 +66,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	[MemberData(nameof(PlannerFixtureIdsWithSolverRequest))]
 	public async Task PlannerFixturesExecuteExpectedSolveBehavior(string fixtureId)
 	{
-		var fixture = LoadPlannerFixture(fixtureId);
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture(fixtureId);
 		Assert.NotNull(fixture.SolverRequest);
 		Assert.NotNull(fixture.SolveExpectation);
 
@@ -134,7 +124,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	[MemberData(nameof(PlannerFixtureIdsWithShareExpectation))]
 	public async Task PlannerFixturesExecuteExpectedShareRoundTripBehavior(string fixtureId)
 	{
-		var fixture = LoadPlannerFixture(fixtureId);
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture(fixtureId);
 		Assert.NotNull(fixture.ShareExpectation);
 
 		var shareRoot = Path.Combine(Path.GetTempPath(), "satisfactorytools-share-tests", Guid.NewGuid().ToString("N"));
@@ -1217,36 +1207,6 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		}
 	}
 
-	private static PlannerFixture LoadPlannerFixture(string fixtureId)
-	{
-		var filePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Planner", fixtureId + ".json");
-		using var stream = File.OpenRead(filePath);
-		var fixture = JsonSerializer.Deserialize<PlannerFixture>(stream, SolverJson.Options);
-		return fixture ?? throw new InvalidOperationException($"Couldn't parse fixture '{fixtureId}'.");
-	}
-
-	private static string GetExpectedStorageKey(string routeVersion)
-	{
-		return routeVersion switch
-		{
-			"1.1" => "production1",
-			"1.1-ficsmas" => "production-ficsmas",
-			"1.2" => "production12",
-			_ => throw new InvalidOperationException($"Unsupported route version '{routeVersion}'.")
-		};
-	}
-
-	private static string GetExpectedSolverGameVersion(string routeVersion)
-	{
-		return routeVersion switch
-		{
-			"1.1" => "1.1.0",
-			"1.1-ficsmas" => "1.0.0-ficsmas",
-			"1.2" => "1.2.0",
-			_ => throw new InvalidOperationException($"Unsupported route version '{routeVersion}'.")
-		};
-	}
-
 	private static string ExtractShareId(string link)
 	{
 		return link[(link.LastIndexOf('=') + 1)..];
@@ -1289,76 +1249,4 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		public JsonElement Data { get; init; }
 	}
 
-	private sealed class PlannerFixture
-	{
-		public string Id { get; init; } = string.Empty;
-		public string Scenario { get; init; } = string.Empty;
-		public string RouteVersion { get; init; } = string.Empty;
-		public string RoutePath { get; init; } = string.Empty;
-		public string StorageKey { get; init; } = string.Empty;
-		public PlannerFixtureUiState UiState { get; init; } = new();
-		public PlannerFixtureState PlannerState { get; init; } = new();
-		public SolverRequest? SolverRequest { get; init; }
-		public PlannerFixtureSolveExpectation? SolveExpectation { get; init; }
-		public PlannerFixtureShareExpectation? ShareExpectation { get; init; }
-	}
-
-	private sealed class PlannerFixtureUiState
-	{
-		public bool ShowDebugOutput { get; init; }
-	}
-
-	private sealed class PlannerFixtureState
-	{
-		public PlannerFixtureMetadata Metadata { get; init; } = new();
-		public PlannerFixtureRequest Request { get; init; } = new();
-	}
-
-	private sealed class PlannerFixtureMetadata
-	{
-		public string? Name { get; init; }
-		public string? Icon { get; init; }
-		public int SchemaVersion { get; init; }
-		public string GameVersion { get; init; } = string.Empty;
-	}
-
-	private sealed class PlannerFixtureRequest
-	{
-		public Dictionary<string, double> ResourceMax { get; init; } = [];
-		public Dictionary<string, double> ResourceWeight { get; init; } = [];
-		public List<string> BlockedResources { get; init; } = [];
-		public List<string> BlockedRecipes { get; init; } = [];
-		public List<string> BlockedMachines { get; init; } = [];
-		public List<string> AllowedAlternateRecipes { get; init; } = [];
-		public double RecipeCostMultiplier { get; init; } = 1;
-		public double PowerConsumptionMultiplier { get; init; } = 1;
-		public List<string> SinkableResources { get; init; } = [];
-		public List<SolverProductionItem> Production { get; init; } = [];
-		public List<SolverInputItem> Input { get; init; } = [];
-	}
-
-	private sealed class PlannerFixtureSolveExpectation
-	{
-		public string ResultStatus { get; init; } = string.Empty;
-		public List<string> ResultKeysPresent { get; init; } = [];
-		public List<string> ResultKeysAbsent { get; init; } = [];
-		public Dictionary<string, double> ResultValues { get; init; } = [];
-		public PlannerFixtureDebugExpectation? Debug { get; init; }
-	}
-
-	private sealed class PlannerFixtureDebugExpectation
-	{
-		public string MessageContains { get; init; } = string.Empty;
-		public string Item { get; init; } = string.Empty;
-		public List<string> ReasonsContain { get; init; } = [];
-	}
-
-	private sealed class PlannerFixtureShareExpectation
-	{
-		public string CreateQueryVersion { get; init; } = string.Empty;
-		public string ExpectedLinkPrefix { get; init; } = string.Empty;
-		public string LoadedMetadataName { get; init; } = string.Empty;
-		public string LoadedMetadataGameVersion { get; init; } = string.Empty;
-		public string LoadedFirstProductionItem { get; init; } = string.Empty;
-	}
 }
