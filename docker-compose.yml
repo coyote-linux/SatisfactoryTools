@@ -8,28 +8,16 @@ services:
       bash -lc "npx --yes yarn@1.22.22 install && npx --yes yarn@1.22.22 build"
 
   web:
-    image: php:8.2-apache
+    image: mcr.microsoft.com/dotnet/sdk:10.0
     depends_on:
       - builder
-      - solver
     ports:
-      - '8080:80'
-    volumes:
-      - ./www:/var/www/html
-      - ./docker/apache/local-v2-proxy.conf:/etc/apache2/conf-enabled/local-v2-proxy.conf:ro
-    command: >
-      bash -lc "a2enmod rewrite proxy proxy_http >/dev/null && until [ -f /var/www/html/assets/app.js ]; do echo 'Waiting for webpack build...'; sleep 1; done; apache2-foreground"
-    restart: unless-stopped
-
-  solver:
-    image: mcr.microsoft.com/dotnet/sdk:10.0
-    working_dir: /workspace
+      - '8080:8080'
     volumes:
       - .:/workspace
+    working_dir: /workspace
     environment:
       ShareStore__Root: /tmp/satisfactorytools-share-store
-    ports:
-      - '8081:8080'
     command: >
-      bash -lc "dotnet run --project SolverService/SatisfactoryTools.Solver.Api/SatisfactoryTools.Solver.Api.csproj --urls=http://0.0.0.0:8080"
+      bash -lc "until [ -f /workspace/www/assets/app.js ]; do echo 'Waiting for webpack build...'; sleep 1; done; dotnet run --project SolverService/SatisfactoryTools.Solver.Api/SatisfactoryTools.Solver.Api.csproj --urls=http://0.0.0.0:8080"
     restart: unless-stopped
