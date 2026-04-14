@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - Refreshed the site shell and production-planner styling with the darker amber fork theme.
 - Updated the solver API test harness to load fixture-backed planner parity artifacts and assert current route/storage, solve, and share compatibility behavior from the captured baseline.
 - Updated local Docker Compose testing to proxy same-origin `/v2/solver` and `/v2/share/*` through the Apache web container to the local ASP.NET compatibility service.
+- Updated the ASP.NET host to serve the Angular shell and `www/` asset tree directly, replacing PHP/Apache runtime duties for the active local testing path.
 
 ### Removed
 - Removed `script-loader` and `angular-templatecache-loader` from the build dependency chain.
@@ -52,3 +53,4 @@ All notable changes to this project will be documented in this file.
 - Fixed manual-only recipes such as Biomass by allowing non-resource ingredients like Leaves, Wood, Mycelia, and Alien Protein to be supplied through planner inputs.
 - Fixed the solver debug panel contrast so diagnostic payloads remain readable against the dark planner theme.
 - Restored the header logo width so the brand mark keeps its intended proportions instead of rendering squished.
+- Restored unified ASP.NET shell parity for bare version-root routes such as `/1.2`, missing asset `404` handling, and empty `SOLVER_URL` fallback behavior.
