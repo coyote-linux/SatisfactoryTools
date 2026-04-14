@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Updated the solver API test harness to load fixture-backed planner parity artifacts and assert current route/storage, solve, and share compatibility behavior from the captured baseline.
 - Updated local Docker Compose testing to proxy same-origin `/v2/solver` and `/v2/share/*` through the Apache web container to the local ASP.NET compatibility service.
 - Updated the ASP.NET host to serve the Angular shell and `www/` asset tree directly, replacing PHP/Apache runtime duties for the active local testing path.
+- Updated the ASP.NET host to use an explicit route-ownership policy so `/v2/*`, static/file-like paths, and legacy Angular shell fallback remain separated and directly testable during the strangler migration.
 
 ### Removed
 - Removed `script-loader` and `angular-templatecache-loader` from the build dependency chain.
