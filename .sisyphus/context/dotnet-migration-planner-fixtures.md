@@ -61,5 +61,6 @@ This document tracks the minimum representative planner cases that must be locke
 
 1. Every fixture must identify planner route context and storage key, and should include the subset of captured expectations that actually apply to that scenario.
 2. In the current captured set, F001/F002/F003/F005/F006/F007/F008 carry solve expectations, while F004 carries the share round-trip expectation.
-3. Do not start M3 without enough fixture coverage to expose parity drift in planner-domain code.
-4. `SolverService/SatisfactoryTools.Solver.Api.Tests/Fixtures/Planner/*.json` is now the authoritative captured artifact set for F001-F008.
+3. **M3 has now started** with the first planner-domain slice: C# planner compatibility/request-shaping parity tests consume these fixtures directly where applicable.
+4. The next M3 slice is the result-domain port work (`ProductionResultFactory`, `Graph`, `ProductionResult`, and related aggregation/parsing types), not UI/route changes.
+5. `SolverService/SatisfactoryTools.Solver.Api.Tests/Fixtures/Planner/*.json` is now the authoritative captured artifact set for F001-F008.

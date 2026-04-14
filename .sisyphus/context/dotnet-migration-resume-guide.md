@@ -15,9 +15,10 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 ## Current Status
 
-- Current phase: **M2 completed**
-- Current milestone: **M2 - Route-Level Strangler Scaffold**
-- Current recommended slice: **M3 - Planner Domain Port Complete**
+- Current phase: **M3 in progress**
+- Current milestone: **M3 - Planner Domain Port Complete**
+- Current completed slice: **M3 slice 1 - planner compatibility/request-shaping layer**
+- Current recommended slice: **M3 slice 2 - result-domain port (graph/result aggregation only)**
 
 ## Completed Slice
 
@@ -66,12 +67,13 @@ Captured file-backed planner parity fixtures F001-F008 inside the existing solve
 ### M3
 
 #### Objective
-Port planner-side business logic to C# under tests before any production-planner UI cutover.
+Continue porting planner-side business logic to C# under tests before any production-planner UI cutover.
 
 #### Expected Work
-1. Port version normalization, request shaping, and result-domain logic out of Angular TypeScript into C#.
-2. Gate the port with the existing parity fixtures and any missing focused planner-domain tests.
-3. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
+1. Keep the new planner compatibility/request-shaping layer stable and reusable.
+2. Port the result-domain slice next: `ProductionResultFactory`, `Graph`, `ProductionResult`, and related aggregation/parsing logic.
+3. Gate the result-domain port with the existing parity fixtures plus any missing focused planner-domain tests.
+4. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
 
 #### Do Not Start Yet
 1. Do not start the Blazor planner UI route during planner-domain porting.
@@ -93,7 +95,7 @@ Port planner-side business logic to C# under tests before any production-planner
 ### Current App Verification
 - `yarn build`
 - `dotnet test "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj"`
-- If the local `SolverService/.../obj/` tree is permission-restricted on this machine, use `dotnet test "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj" --artifacts-path /tmp/satisfactorytools-m2-artifacts --logger "console;verbosity=minimal"`
+- If the local `SolverService/.../obj/` tree is permission-restricted on this machine, use `dotnet test "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj" --artifacts-path /tmp/satisfactorytools-dotnet-test-artifacts --logger "console;verbosity=minimal"`
 
 ### Current Live Deployment Pattern
 - app source deployed to `/srv/satisfactorytools/current`
