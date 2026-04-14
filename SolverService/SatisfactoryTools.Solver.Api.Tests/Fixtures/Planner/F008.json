@@ -1,0 +1,75 @@
+{
+  "id": "F008",
+  "scenario": "1.2 manual-input debug parity",
+  "routeVersion": "1.2",
+  "routePath": "/1.2/production",
+  "storageKey": "production12",
+  "uiState": {
+    "showDebugOutput": true
+  },
+  "plannerState": {
+    "metadata": {
+      "name": "Fixture F008 - Biomass Manual Input",
+      "icon": "Desc_GenericBiomass_C",
+      "schemaVersion": 1,
+      "gameVersion": "1.2"
+    },
+    "request": {
+      "resourceMax": {
+        "Desc_Water_C": 1000
+      },
+      "resourceWeight": {
+        "Desc_Water_C": 0
+      },
+      "blockedResources": [],
+      "blockedRecipes": [],
+      "blockedMachines": [],
+      "allowedAlternateRecipes": [],
+      "recipeCostMultiplier": 1,
+      "powerConsumptionMultiplier": 1,
+      "sinkableResources": [],
+      "production": [
+        {
+          "item": "Desc_GenericBiomass_C",
+          "type": "perMinute",
+          "amount": 5,
+          "ratio": 100
+        }
+      ],
+      "input": []
+    }
+  },
+  "solverRequest": {
+    "gameVersion": "1.2.0",
+    "resourceMax": {
+      "Desc_Water_C": 1000
+    },
+    "resourceWeight": {
+      "Desc_Water_C": 0
+    },
+    "blockedResources": [],
+    "blockedRecipes": [],
+    "allowedAlternateRecipes": [],
+    "sinkableResources": [],
+    "production": [
+      {
+        "item": "Desc_GenericBiomass_C",
+        "type": "perMinute",
+        "amount": 5,
+        "ratio": 100
+      }
+    ],
+    "input": [],
+    "recipeCostMultiplier": 1,
+    "debug": true
+  },
+  "solveExpectation": {
+    "resultStatus": "NO_RESULT",
+    "debug": {
+      "item": "Desc_GenericBiomass_C",
+      "reasonsContain": [
+        "must be supplied as an input"
+      ]
+    }
+  }
+}
