@@ -4,8 +4,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SatisfactoryTools.Solver.Api.Contracts;
 using SatisfactoryTools.Solver.Api.Services;
@@ -143,7 +141,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		Directory.CreateDirectory(shareRoot);
 
 		try {
-			using var shareClient = CreateShareClient(shareRoot);
+			using var shareClient = factory.CreateShareClient(shareRoot);
 			var createUrl = string.IsNullOrWhiteSpace(fixture.ShareExpectation!.CreateQueryVersion)
 				? "/v2/share/"
 				: "/v2/share/?version=" + Uri.EscapeDataString(fixture.ShareExpectation.CreateQueryVersion);
@@ -183,111 +181,6 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		Assert.NotNull(payload);
 		Assert.Equal("200", payload!["code"].ToString());
 		Assert.Equal("True", payload["active"].ToString());
-	}
-
-	[Fact]
-	public async Task RootServesShellWithDefaultSolverUrlAndCacheBustedBundleReference()
-	{
-		using var frontendSite = FrontendTestSite.Create();
-		using var frontendClient = CreateFrontendClient(frontendSite.RootPath);
-
-		var response = await frontendClient.GetAsync("/");
-		response.EnsureSuccessStatusCode();
-		Assert.Equal("text/html; charset=utf-8", response.Content.Headers.ContentType?.ToString());
-
-		var html = await response.Content.ReadAsStringAsync();
-		Assert.Contains("<base href=\"/\">", html, StringComparison.Ordinal);
-		Assert.Contains("window.SATISFACTORY_TOOLS_CONFIG = {", html, StringComparison.Ordinal);
-		Assert.Contains("solverUrl: \"/v2/solver\"", html, StringComparison.Ordinal);
-		Assert.Contains($"/assets/app.js?v={frontendSite.BundleVersion}", html, StringComparison.Ordinal);
-		Assert.DoesNotContain("<?=", html, StringComparison.Ordinal);
-	}
-
-	[Fact]
-	public async Task DeepLinksServeShellAndPreserveRuntimeSolverOverrideInjection()
-	{
-		using var frontendSite = FrontendTestSite.Create();
-		const string solverUrl = "https://solver.example.test/v2/solver";
-		using var frontendClient = CreateFrontendClient(frontendSite.RootPath, solverUrl: solverUrl);
-
-		var response = await frontendClient.GetAsync("/1.2/production?share=abc123");
-		response.EnsureSuccessStatusCode();
-
-		var html = await response.Content.ReadAsStringAsync();
-		Assert.Contains("<app></app>", html, StringComparison.Ordinal);
-		Assert.Contains($"solverUrl: \"{solverUrl}\"", html, StringComparison.Ordinal);
-	}
-
-	[Theory]
-	[InlineData("/1.0")]
-	[InlineData("/1.0-ficsmas")]
-	[InlineData("/1.1")]
-	[InlineData("/1.1-ficsmas")]
-	[InlineData("/1.2")]
-	public async Task SupportedBareVersionRootsStillServeShell(string path)
-	{
-		using var frontendSite = FrontendTestSite.Create();
-		using var frontendClient = CreateFrontendClient(frontendSite.RootPath);
-
-		var response = await frontendClient.GetAsync(path);
-		response.EnsureSuccessStatusCode();
-
-		var html = await response.Content.ReadAsStringAsync();
-		Assert.Contains("<!DOCTYPE html>", html, StringComparison.Ordinal);
-		Assert.Contains("<app></app>", html, StringComparison.Ordinal);
-	}
-
-	[Fact]
-	public async Task EmptySolverUrlOverrideFallsBackToDefaultSolverPath()
-	{
-		using var frontendSite = FrontendTestSite.Create();
-		using var frontendClient = CreateFrontendClient(frontendSite.RootPath, solverUrl: string.Empty);
-
-		var response = await frontendClient.GetAsync("/");
-		response.EnsureSuccessStatusCode();
-
-		var html = await response.Content.ReadAsStringAsync();
-		Assert.Contains("solverUrl: \"/v2/solver\"", html, StringComparison.Ordinal);
-	}
-
-	[Fact]
-	public async Task ConfiguredFrontendRootServesStaticAssetsFromAssetTree()
-	{
-		using var frontendSite = FrontendTestSite.Create();
-		using var frontendClient = CreateFrontendClient(frontendSite.RootPath);
-
-		var response = await frontendClient.GetAsync("/assets/app.js");
-		response.EnsureSuccessStatusCode();
-		Assert.Contains("javascript", response.Content.Headers.ContentType?.MediaType ?? string.Empty, StringComparison.OrdinalIgnoreCase);
-
-		var script = await response.Content.ReadAsStringAsync();
-		Assert.Equal(FrontendTestSite.BundleContents, script);
-	}
-
-	[Fact]
-	public async Task UnknownV2RouteDoesNotFallBackToShellHtml()
-	{
-		using var frontendSite = FrontendTestSite.Create();
-		using var frontendClient = CreateFrontendClient(frontendSite.RootPath);
-
-		var response = await frontendClient.GetAsync("/v2/not-a-route");
-		Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-
-		var body = await response.Content.ReadAsStringAsync();
-		Assert.DoesNotContain("<!DOCTYPE html>", body, StringComparison.Ordinal);
-	}
-
-	[Fact]
-	public async Task MissingAssetPathDoesNotFallBackToShellHtml()
-	{
-		using var frontendSite = FrontendTestSite.Create();
-		using var frontendClient = CreateFrontendClient(frontendSite.RootPath);
-
-		var response = await frontendClient.GetAsync("/assets/missing.js");
-		Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-
-		var body = await response.Content.ReadAsStringAsync();
-		Assert.DoesNotContain("<!DOCTYPE html>", body, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -1099,7 +992,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		Directory.CreateDirectory(shareRoot);
 
 		try {
-			using var shareClient = CreateShareClient(shareRoot);
+			using var shareClient = factory.CreateShareClient(shareRoot);
 
 			var createResponse = await shareClient.PostAsJsonAsync("/v2/share/", new
 			{
@@ -1140,7 +1033,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		Directory.CreateDirectory(shareRoot);
 
 		try {
-			using var shareClient = CreateShareClient(shareRoot);
+			using var shareClient = factory.CreateShareClient(shareRoot);
 
 			var createResponse = await shareClient.PostAsJsonAsync("/v2/share/", new
 			{
@@ -1180,7 +1073,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		Directory.CreateDirectory(shareRoot);
 
 		try {
-			using var shareClient = CreateShareClient(shareRoot);
+			using var shareClient = factory.CreateShareClient(shareRoot);
 
 			var missingMetadataResponse = await shareClient.PostAsJsonAsync("/v2/share/?version=1.2", new
 			{
@@ -1278,7 +1171,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		Directory.CreateDirectory(shareRoot);
 
 		try {
-			using var shareClient = CreateShareClient(shareRoot);
+			using var shareClient = factory.CreateShareClient(shareRoot);
 
 			var createResponse = await shareClient.PostAsJsonAsync("/v2/share/?version=1.2", new
 			{
@@ -1324,39 +1217,6 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		}
 	}
 
-	private HttpClient CreateShareClient(string shareRoot)
-	{
-		return CreateConfiguredClient(new Dictionary<string, string?>
-		{
-			["ShareStore:Root"] = shareRoot,
-		});
-	}
-
-	private HttpClient CreateFrontendClient(string frontendRoot, string? solverUrl = null)
-	{
-		var settings = new Dictionary<string, string?>
-		{
-			["Frontend:Root"] = frontendRoot,
-		};
-
-		if (solverUrl is not null) {
-			settings["SOLVER_URL"] = solverUrl;
-		}
-
-		return CreateConfiguredClient(settings);
-	}
-
-	private HttpClient CreateConfiguredClient(Dictionary<string, string?> settings)
-	{
-		return factory.WithWebHostBuilder((builder) =>
-		{
-			builder.ConfigureAppConfiguration((_, configuration) =>
-			{
-				configuration.AddInMemoryCollection(settings);
-			});
-		}).CreateClient();
-	}
-
 	private static PlannerFixture LoadPlannerFixture(string fixtureId)
 	{
 		var filePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Planner", fixtureId + ".json");
@@ -1390,57 +1250,6 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	private static string ExtractShareId(string link)
 	{
 		return link[(link.LastIndexOf('=') + 1)..];
-	}
-
-	private sealed class FrontendTestSite : IDisposable
-	{
-		public const string BundleContents = "console.log('frontend test bundle');";
-		private static readonly DateTimeOffset BundleTimestamp = DateTimeOffset.FromUnixTimeSeconds(1735689600);
-
-		private FrontendTestSite(string rootPath)
-		{
-			RootPath = rootPath;
-		}
-
-		public string RootPath { get; }
-
-		public long BundleVersion => BundleTimestamp.ToUnixTimeSeconds();
-
-		public static FrontendTestSite Create()
-		{
-			var rootPath = Path.Combine(Path.GetTempPath(), "satisfactorytools-frontend-tests", Guid.NewGuid().ToString("N"));
-			Directory.CreateDirectory(rootPath);
-			Directory.CreateDirectory(Path.Combine(rootPath, "assets"));
-			File.Copy(ResolveRepositoryShellTemplatePath(), Path.Combine(rootPath, "index.php"));
-
-			var bundlePath = Path.Combine(rootPath, "assets", "app.js");
-			File.WriteAllText(bundlePath, BundleContents);
-			File.SetLastWriteTimeUtc(bundlePath, BundleTimestamp.UtcDateTime);
-
-			return new FrontendTestSite(rootPath);
-		}
-
-		public void Dispose()
-		{
-			if (Directory.Exists(RootPath)) {
-				Directory.Delete(RootPath, true);
-			}
-		}
-
-		private static string ResolveRepositoryShellTemplatePath()
-		{
-			var directory = new DirectoryInfo(AppContext.BaseDirectory);
-			while (directory is not null) {
-				var candidate = Path.Combine(directory.FullName, "www", "index.php");
-				if (File.Exists(candidate)) {
-					return candidate;
-				}
-
-				directory = directory.Parent;
-			}
-
-			throw new InvalidOperationException("Unable to locate the repository shell template at www/index.php.");
-		}
 	}
 
 	private sealed class SolverEnvelope
