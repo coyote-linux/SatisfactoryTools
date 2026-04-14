@@ -1,0 +1,68 @@
+{
+  "id": "F002",
+  "scenario": "1.1-ficsmas seasonal gift solve",
+  "routeVersion": "1.1-ficsmas",
+  "routePath": "/1.1-ficsmas/production",
+  "storageKey": "production-ficsmas",
+  "uiState": {
+    "showDebugOutput": false
+  },
+  "plannerState": {
+    "metadata": {
+      "name": "Fixture F002 - Ficsmas Gifts",
+      "icon": "Desc_Gift_C",
+      "schemaVersion": 1,
+      "gameVersion": "1.1-ficsmas"
+    },
+    "request": {
+      "resourceMax": {},
+      "resourceWeight": {},
+      "blockedResources": [],
+      "blockedRecipes": [],
+      "blockedMachines": [],
+      "allowedAlternateRecipes": [],
+      "recipeCostMultiplier": 1,
+      "powerConsumptionMultiplier": 1,
+      "sinkableResources": [],
+      "production": [
+        {
+          "item": "Desc_Gift_C",
+          "type": "perMinute",
+          "amount": 15,
+          "ratio": 100
+        }
+      ],
+      "input": []
+    }
+  },
+  "solverRequest": {
+    "gameVersion": "1.0.0-ficsmas",
+    "resourceMax": {},
+    "resourceWeight": {},
+    "blockedResources": [],
+    "blockedRecipes": [],
+    "allowedAlternateRecipes": [],
+    "sinkableResources": [],
+    "production": [
+      {
+        "item": "Desc_Gift_C",
+        "type": "perMinute",
+        "amount": 15,
+        "ratio": 100
+      }
+    ],
+    "input": [],
+    "debug": false
+  },
+  "solveExpectation": {
+    "resultStatus": "RESULT",
+    "resultKeysPresent": [
+      "Desc_Gift_C#Product",
+      "Fake_Recipe_Gift_C@100#Desc_TreeGiftProducer_C"
+    ],
+    "resultValues": {
+      "Desc_Gift_C#Product": 15,
+      "Fake_Recipe_Gift_C@100#Desc_TreeGiftProducer_C": 1
+    }
+  }
+}
