@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +14,9 @@ namespace SatisfactoryTools.Solver.Api.Tests;
 
 public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 {
+	private static readonly Regex ShareIdPattern = new("^[A-Za-z0-9_-]{16}$", RegexOptions.Compiled);
+	private const double ResultTolerance = 0.001d;
+
 	private readonly WebApplicationFactory<Program> factory;
 	private readonly HttpClient client;
 
@@ -19,6 +24,153 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	{
 		this.factory = factory;
 		client = factory.CreateClient();
+	}
+
+	public static IEnumerable<object[]> PlannerFixtureIds()
+	{
+		for (var index = 1; index <= 8; index++) {
+			yield return [$"F{index:000}"];
+		}
+	}
+
+	public static IEnumerable<object[]> PlannerFixtureIdsWithSolverRequest()
+	{
+		foreach (var fixtureId in PlannerFixtureIds().Select((entry) => (string)entry[0])) {
+			if (LoadPlannerFixture(fixtureId).SolverRequest is not null) {
+				yield return [fixtureId];
+			}
+		}
+	}
+
+	public static IEnumerable<object[]> PlannerFixtureIdsWithShareExpectation()
+	{
+		foreach (var fixtureId in PlannerFixtureIds().Select((entry) => (string)entry[0])) {
+			if (LoadPlannerFixture(fixtureId).ShareExpectation is not null) {
+				yield return [fixtureId];
+			}
+		}
+	}
+
+	[Theory]
+	[MemberData(nameof(PlannerFixtureIds))]
+	public void PlannerFixturesMatchCurrentRouteAndStorageParity(string fixtureId)
+	{
+		var fixture = LoadPlannerFixture(fixtureId);
+
+		Assert.Equal($"/{fixture.RouteVersion}/production", fixture.RoutePath);
+		Assert.Equal(GetExpectedStorageKey(fixture.RouteVersion), fixture.StorageKey);
+		Assert.Equal(fixture.RouteVersion, fixture.PlannerState.Metadata.GameVersion);
+		Assert.Equal(fixture.UiState.ShowDebugOutput, fixture.SolverRequest?.Debug ?? false);
+
+		if (fixture.SolverRequest is not null) {
+			Assert.Equal(GetExpectedSolverGameVersion(fixture.RouteVersion), fixture.SolverRequest.GameVersion);
+			Assert.Null(fixture.SolverRequest.PowerConsumptionMultiplier);
+
+			if (fixture.RouteVersion == "1.2") {
+				Assert.NotNull(fixture.SolverRequest.RecipeCostMultiplier);
+			} else {
+				Assert.Null(fixture.SolverRequest.RecipeCostMultiplier);
+			}
+		}
+	}
+
+	[Theory]
+	[MemberData(nameof(PlannerFixtureIdsWithSolverRequest))]
+	public async Task PlannerFixturesExecuteExpectedSolveBehavior(string fixtureId)
+	{
+		var fixture = LoadPlannerFixture(fixtureId);
+		Assert.NotNull(fixture.SolverRequest);
+		Assert.NotNull(fixture.SolveExpectation);
+
+		var response = await client.PostAsJsonAsync("/v2/solver", fixture.SolverRequest!);
+		response.EnsureSuccessStatusCode();
+
+		var payload = await response.Content.ReadFromJsonAsync<SolverEnvelope>();
+		Assert.NotNull(payload);
+		Assert.Equal(200, payload!.Code);
+
+		var expectation = fixture.SolveExpectation!;
+		var result = payload.Result ?? [];
+
+		switch (expectation.ResultStatus) {
+			case "RESULT":
+				Assert.NotEmpty(result);
+				break;
+			case "NO_RESULT":
+				Assert.Empty(result);
+				break;
+			default:
+				throw new InvalidOperationException($"Unsupported result status '{expectation.ResultStatus}'.");
+		}
+
+		foreach (var key in expectation.ResultKeysPresent) {
+			Assert.Contains(key, result.Keys);
+		}
+
+		foreach (var key in expectation.ResultKeysAbsent) {
+			Assert.DoesNotContain(key, result.Keys);
+		}
+
+		foreach (var entry in expectation.ResultValues) {
+			var actual = Assert.Contains(entry.Key, result);
+			Assert.InRange(actual, entry.Value - ResultTolerance, entry.Value + ResultTolerance);
+		}
+
+		if (expectation.Debug is null) {
+			return;
+		}
+
+		Assert.NotNull(payload.Debug);
+
+		if (!string.IsNullOrWhiteSpace(expectation.Debug.MessageContains)) {
+			Assert.Contains(expectation.Debug.MessageContains, payload.Debug!.Message, StringComparison.OrdinalIgnoreCase);
+		}
+
+		var debugItem = Assert.Single(payload.Debug!.Items, (item) => item.Item == expectation.Debug.Item);
+		foreach (var reason in expectation.Debug.ReasonsContain) {
+			Assert.Contains(debugItem.Reasons, (entry) => entry.Contains(reason, StringComparison.OrdinalIgnoreCase));
+		}
+	}
+
+	[Theory]
+	[MemberData(nameof(PlannerFixtureIdsWithShareExpectation))]
+	public async Task PlannerFixturesExecuteExpectedShareRoundTripBehavior(string fixtureId)
+	{
+		var fixture = LoadPlannerFixture(fixtureId);
+		Assert.NotNull(fixture.ShareExpectation);
+
+		var shareRoot = Path.Combine(Path.GetTempPath(), "satisfactorytools-share-tests", Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(shareRoot);
+
+		try {
+			using var shareClient = CreateShareClient(shareRoot);
+			var createUrl = string.IsNullOrWhiteSpace(fixture.ShareExpectation!.CreateQueryVersion)
+				? "/v2/share/"
+				: "/v2/share/?version=" + Uri.EscapeDataString(fixture.ShareExpectation.CreateQueryVersion);
+
+			var createResponse = await shareClient.PostAsJsonAsync(createUrl, fixture.PlannerState);
+			createResponse.EnsureSuccessStatusCode();
+
+			var createPayload = await createResponse.Content.ReadFromJsonAsync<ShareCreateEnvelope>();
+			Assert.NotNull(createPayload);
+			Assert.Equal(200, createPayload!.Code);
+			Assert.StartsWith(fixture.ShareExpectation.ExpectedLinkPrefix, createPayload.Link, StringComparison.Ordinal);
+
+			var shareId = ExtractShareId(createPayload.Link);
+			Assert.Matches(ShareIdPattern, shareId);
+
+			var loadResponse = await shareClient.GetAsync("/v2/share/" + shareId);
+			loadResponse.EnsureSuccessStatusCode();
+
+			var loadPayload = await loadResponse.Content.ReadFromJsonAsync<ShareLoadEnvelope>();
+			Assert.NotNull(loadPayload);
+			Assert.Equal(200, loadPayload!.Code);
+			Assert.Equal(fixture.ShareExpectation.LoadedMetadataGameVersion, loadPayload.Data.GetProperty("metadata").GetProperty("gameVersion").GetString());
+			Assert.Equal(fixture.ShareExpectation.LoadedMetadataName, loadPayload.Data.GetProperty("metadata").GetProperty("name").GetString());
+			Assert.Equal(fixture.ShareExpectation.LoadedFirstProductionItem, loadPayload.Data.GetProperty("request").GetProperty("production")[0].GetProperty("item").GetString());
+		} finally {
+			Directory.Delete(shareRoot, true);
+		}
 	}
 
 	[Fact]
@@ -836,22 +988,192 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	}
 
 	[Fact]
+	public async Task ShareCreateUsesMetadataGameVersionWhenQueryVersionIsMissing()
+	{
+		var shareRoot = Path.Combine(Path.GetTempPath(), "satisfactorytools-share-tests", Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(shareRoot);
+
+		try {
+			using var shareClient = CreateShareClient(shareRoot);
+
+			var createResponse = await shareClient.PostAsJsonAsync("/v2/share/", new
+			{
+				metadata = new
+				{
+					name = "Shared Ficsmas Plan",
+					icon = "Desc_Gift_C",
+					schemaVersion = 1,
+					gameVersion = "1.1-ficsmas",
+				},
+				request = new
+				{
+					resourceMax = new Dictionary<string, double>(),
+					resourceWeight = new Dictionary<string, double>(),
+					blockedResources = Array.Empty<string>(),
+					blockedRecipes = Array.Empty<string>(),
+					allowedAlternateRecipes = Array.Empty<string>(),
+					sinkableResources = Array.Empty<string>(),
+					production = new[] { new { item = "Desc_Gift_C", type = "perMinute", amount = 10d, ratio = 100d } },
+					input = Array.Empty<object>(),
+				},
+			});
+
+			createResponse.EnsureSuccessStatusCode();
+			var createPayload = await createResponse.Content.ReadFromJsonAsync<ShareCreateEnvelope>();
+			Assert.NotNull(createPayload);
+			Assert.Equal(200, createPayload!.Code);
+			Assert.StartsWith("/1.1-ficsmas/production?share=", createPayload.Link, StringComparison.Ordinal);
+		} finally {
+			Directory.Delete(shareRoot, true);
+		}
+	}
+
+	[Fact]
+	public async Task ShareCreateDefaultsToVersion11WhenNoQueryOrMetadataVersionIsProvided()
+	{
+		var shareRoot = Path.Combine(Path.GetTempPath(), "satisfactorytools-share-tests", Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(shareRoot);
+
+		try {
+			using var shareClient = CreateShareClient(shareRoot);
+
+			var createResponse = await shareClient.PostAsJsonAsync("/v2/share/", new
+			{
+				metadata = new
+				{
+					name = "Shared Default Plan",
+					icon = "Desc_IronPlate_C",
+					schemaVersion = 1,
+				},
+				request = new
+				{
+					resourceMax = new Dictionary<string, double>(),
+					resourceWeight = new Dictionary<string, double>(),
+					blockedResources = Array.Empty<string>(),
+					blockedRecipes = Array.Empty<string>(),
+					allowedAlternateRecipes = Array.Empty<string>(),
+					sinkableResources = Array.Empty<string>(),
+					production = new[] { new { item = "Desc_IronPlate_C", type = "perMinute", amount = 10d, ratio = 100d } },
+					input = Array.Empty<object>(),
+				},
+			});
+
+			createResponse.EnsureSuccessStatusCode();
+			var createPayload = await createResponse.Content.ReadFromJsonAsync<ShareCreateEnvelope>();
+			Assert.NotNull(createPayload);
+			Assert.Equal(200, createPayload!.Code);
+			Assert.StartsWith("/1.1/production?share=", createPayload.Link, StringComparison.Ordinal);
+		} finally {
+			Directory.Delete(shareRoot, true);
+		}
+	}
+
+	[Fact]
+	public async Task ShareCreateRejectsPayloadMissingMetadataOrRequest()
+	{
+		var shareRoot = Path.Combine(Path.GetTempPath(), "satisfactorytools-share-tests", Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(shareRoot);
+
+		try {
+			using var shareClient = CreateShareClient(shareRoot);
+
+			var missingMetadataResponse = await shareClient.PostAsJsonAsync("/v2/share/?version=1.2", new
+			{
+				request = new
+				{
+					resourceMax = new Dictionary<string, double>(),
+					resourceWeight = new Dictionary<string, double>(),
+					blockedResources = Array.Empty<string>(),
+					blockedRecipes = Array.Empty<string>(),
+					allowedAlternateRecipes = Array.Empty<string>(),
+					sinkableResources = Array.Empty<string>(),
+					production = new[] { new { item = "Desc_Motor_C", type = "perMinute", amount = 10d, ratio = 100d } },
+					input = Array.Empty<object>(),
+				},
+			});
+
+			Assert.Equal(HttpStatusCode.BadRequest, missingMetadataResponse.StatusCode);
+			var missingMetadataPayload = await missingMetadataResponse.Content.ReadFromJsonAsync<ErrorEnvelope>();
+			Assert.NotNull(missingMetadataPayload);
+			Assert.Equal(400, missingMetadataPayload!.Code);
+			Assert.Contains("metadata and request", missingMetadataPayload.Error, StringComparison.OrdinalIgnoreCase);
+
+			var missingRequestResponse = await shareClient.PostAsJsonAsync("/v2/share/?version=1.2", new
+			{
+				metadata = new
+				{
+					name = "Invalid Share",
+					icon = "Desc_Motor_C",
+					schemaVersion = 1,
+					gameVersion = "1.2",
+				},
+			});
+
+			Assert.Equal(HttpStatusCode.BadRequest, missingRequestResponse.StatusCode);
+			var missingRequestPayload = await missingRequestResponse.Content.ReadFromJsonAsync<ErrorEnvelope>();
+			Assert.NotNull(missingRequestPayload);
+			Assert.Equal(400, missingRequestPayload!.Code);
+			Assert.Contains("metadata and request", missingRequestPayload.Error, StringComparison.OrdinalIgnoreCase);
+		} finally {
+			Directory.Delete(shareRoot, true);
+		}
+	}
+
+	[Fact]
+	public async Task ShareLoadRejectsInvalidShareId()
+	{
+		var response = await client.GetAsync("/v2/share/not-a-valid-id");
+
+		Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+		var payload = await response.Content.ReadFromJsonAsync<ErrorEnvelope>();
+		Assert.NotNull(payload);
+		Assert.Equal(400, payload!.Code);
+		Assert.Contains("Invalid share id", payload.Error, StringComparison.OrdinalIgnoreCase);
+	}
+
+	[Fact]
+	public async Task SolverRejectsUnknownTopLevelPayloadMembers()
+	{
+		var response = await client.PostAsJsonAsync("/v2/solver", new
+		{
+			gameVersion = "1.1.0",
+			resourceMax = new Dictionary<string, double>
+			{
+				["Desc_OreIron_C"] = 120,
+				["Desc_Water_C"] = 0,
+			},
+			resourceWeight = new Dictionary<string, double>
+			{
+				["Desc_OreIron_C"] = 1,
+				["Desc_Water_C"] = 0,
+			},
+			blockedResources = Array.Empty<string>(),
+			blockedRecipes = Array.Empty<string>(),
+			allowedAlternateRecipes = Array.Empty<string>(),
+			sinkableResources = Array.Empty<string>(),
+			production = new[]
+			{
+				new { item = "Desc_IronPlate_C", type = "perMinute", amount = 40d, ratio = 100d },
+			},
+			input = Array.Empty<object>(),
+			unexpected = true,
+		});
+
+		Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+		var payload = await response.Content.ReadFromJsonAsync<ErrorEnvelope>();
+		Assert.NotNull(payload);
+		Assert.Equal(500, payload!.Code);
+		Assert.NotEmpty(payload.Error);
+	}
+
+	[Fact]
 	public async Task ShareEndpointsRoundTripPlannerPayload()
 	{
 		var shareRoot = Path.Combine(Path.GetTempPath(), "satisfactorytools-share-tests", Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(shareRoot);
 
 		try {
-			using var shareClient = factory.WithWebHostBuilder((builder) =>
-			{
-				builder.ConfigureAppConfiguration((_, configuration) =>
-				{
-					configuration.AddInMemoryCollection(new Dictionary<string, string?>
-					{
-						["ShareStore:Root"] = shareRoot,
-					});
-				});
-			}).CreateClient();
+			using var shareClient = CreateShareClient(shareRoot);
 
 			var createResponse = await shareClient.PostAsJsonAsync("/v2/share/?version=1.2", new
 			{
@@ -881,8 +1203,9 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 			Assert.Equal(200, createPayload!.Code);
 			Assert.StartsWith("/1.2/production?share=", createPayload.Link, StringComparison.Ordinal);
 
-			var shareId = createPayload.Link[(createPayload.Link.LastIndexOf('=') + 1)..];
+			var shareId = ExtractShareId(createPayload.Link);
 			Assert.NotEmpty(shareId);
+			Assert.Matches(ShareIdPattern, shareId);
 
 			var loadResponse = await shareClient.GetAsync("/v2/share/" + shareId);
 			loadResponse.EnsureSuccessStatusCode();
@@ -894,6 +1217,55 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		} finally {
 			Directory.Delete(shareRoot, true);
 		}
+	}
+
+	private HttpClient CreateShareClient(string shareRoot)
+	{
+		return factory.WithWebHostBuilder((builder) =>
+		{
+			builder.ConfigureAppConfiguration((_, configuration) =>
+			{
+				configuration.AddInMemoryCollection(new Dictionary<string, string?>
+				{
+					["ShareStore:Root"] = shareRoot,
+				});
+			});
+		}).CreateClient();
+	}
+
+	private static PlannerFixture LoadPlannerFixture(string fixtureId)
+	{
+		var filePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Planner", fixtureId + ".json");
+		using var stream = File.OpenRead(filePath);
+		var fixture = JsonSerializer.Deserialize<PlannerFixture>(stream, SolverJson.Options);
+		return fixture ?? throw new InvalidOperationException($"Couldn't parse fixture '{fixtureId}'.");
+	}
+
+	private static string GetExpectedStorageKey(string routeVersion)
+	{
+		return routeVersion switch
+		{
+			"1.1" => "production1",
+			"1.1-ficsmas" => "production-ficsmas",
+			"1.2" => "production12",
+			_ => throw new InvalidOperationException($"Unsupported route version '{routeVersion}'.")
+		};
+	}
+
+	private static string GetExpectedSolverGameVersion(string routeVersion)
+	{
+		return routeVersion switch
+		{
+			"1.1" => "1.1.0",
+			"1.1-ficsmas" => "1.0.0-ficsmas",
+			"1.2" => "1.2.0",
+			_ => throw new InvalidOperationException($"Unsupported route version '{routeVersion}'.")
+		};
+	}
+
+	private static string ExtractShareId(string link)
+	{
+		return link[(link.LastIndexOf('=') + 1)..];
 	}
 
 	private sealed class SolverEnvelope
@@ -931,5 +1303,78 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	{
 		public int Code { get; init; }
 		public JsonElement Data { get; init; }
+	}
+
+	private sealed class PlannerFixture
+	{
+		public string Id { get; init; } = string.Empty;
+		public string Scenario { get; init; } = string.Empty;
+		public string RouteVersion { get; init; } = string.Empty;
+		public string RoutePath { get; init; } = string.Empty;
+		public string StorageKey { get; init; } = string.Empty;
+		public PlannerFixtureUiState UiState { get; init; } = new();
+		public PlannerFixtureState PlannerState { get; init; } = new();
+		public SolverRequest? SolverRequest { get; init; }
+		public PlannerFixtureSolveExpectation? SolveExpectation { get; init; }
+		public PlannerFixtureShareExpectation? ShareExpectation { get; init; }
+	}
+
+	private sealed class PlannerFixtureUiState
+	{
+		public bool ShowDebugOutput { get; init; }
+	}
+
+	private sealed class PlannerFixtureState
+	{
+		public PlannerFixtureMetadata Metadata { get; init; } = new();
+		public PlannerFixtureRequest Request { get; init; } = new();
+	}
+
+	private sealed class PlannerFixtureMetadata
+	{
+		public string? Name { get; init; }
+		public string? Icon { get; init; }
+		public int SchemaVersion { get; init; }
+		public string GameVersion { get; init; } = string.Empty;
+	}
+
+	private sealed class PlannerFixtureRequest
+	{
+		public Dictionary<string, double> ResourceMax { get; init; } = [];
+		public Dictionary<string, double> ResourceWeight { get; init; } = [];
+		public List<string> BlockedResources { get; init; } = [];
+		public List<string> BlockedRecipes { get; init; } = [];
+		public List<string> BlockedMachines { get; init; } = [];
+		public List<string> AllowedAlternateRecipes { get; init; } = [];
+		public double RecipeCostMultiplier { get; init; } = 1;
+		public double PowerConsumptionMultiplier { get; init; } = 1;
+		public List<string> SinkableResources { get; init; } = [];
+		public List<SolverProductionItem> Production { get; init; } = [];
+		public List<SolverInputItem> Input { get; init; } = [];
+	}
+
+	private sealed class PlannerFixtureSolveExpectation
+	{
+		public string ResultStatus { get; init; } = string.Empty;
+		public List<string> ResultKeysPresent { get; init; } = [];
+		public List<string> ResultKeysAbsent { get; init; } = [];
+		public Dictionary<string, double> ResultValues { get; init; } = [];
+		public PlannerFixtureDebugExpectation? Debug { get; init; }
+	}
+
+	private sealed class PlannerFixtureDebugExpectation
+	{
+		public string MessageContains { get; init; } = string.Empty;
+		public string Item { get; init; } = string.Empty;
+		public List<string> ReasonsContain { get; init; } = [];
+	}
+
+	private sealed class PlannerFixtureShareExpectation
+	{
+		public string CreateQueryVersion { get; init; } = string.Empty;
+		public string ExpectedLinkPrefix { get; init; } = string.Empty;
+		public string LoadedMetadataName { get; init; } = string.Empty;
+		public string LoadedMetadataGameVersion { get; init; } = string.Empty;
+		public string LoadedFirstProductionItem { get; init; } = string.Empty;
 	}
 }
