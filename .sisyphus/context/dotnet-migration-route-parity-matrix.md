@@ -9,7 +9,8 @@ Track route-by-route migration from AngularJS ownership to ASP.NET Core ownershi
 | Route / State Group | Current Owner | Key Files | Target Owner | Planned Milestone | Compatibility Requirements | Status |
 |---|---|---|---|---|---|---|
 | Shell bootstrap | ASP.NET Core + AngularJS | `www/index.php`, `src/app.ts`, `SolverService/.../Program.cs` | ASP.NET Core host | M1 | preserve app shell behavior, `solverUrl` injection, asset loading, base href assumptions | Preserved |
-| Deep-link fallback | ASP.NET Core fallback routing | `www/.htaccess`, `SolverService/.../Program.cs` | ASP.NET Core middleware/fallback routing | M1 | preserve current HTML5-mode deep links while keeping `/v2/*` off the shell fallback | Preserved |
+| Host route-ownership policy | ASP.NET Core host | `SolverService/.../Program.cs`, `SolverService/.../Services/HostRouteOwnershipPolicy.cs` | ASP.NET Core host | M2 | keep `/v2/*` API-owned, keep static files ahead of shell fallback, keep legacy Angular routes on fallback until later cutover | Preserved |
+| Deep-link fallback | ASP.NET Core fallback routing | `www/.htaccess`, `SolverService/.../Program.cs`, `SolverService/.../Services/HostRouteOwnershipPolicy.cs` | ASP.NET Core middleware/fallback routing | M1-M2 | preserve current HTML5-mode deep links while keeping `/v2/*` off the shell fallback | Preserved |
 | Version route wrapper | AngularJS ui-router | `src/Module/AppModule.ts`, `src/Data/DataProvider.ts` | ASP.NET Core + migrated UI route layer | M2-M4 | preserve supported versions and normalization | Planned |
 | Home | AngularJS | `AppModule.ts`, `HomeController.ts`, `templates/Controllers/home.html` | ASP.NET Core UI | M6 | preserve path, visible behavior, version context | Planned |
 | Items list/detail | AngularJS | `ItemController.ts`, item templates, filters | ASP.NET Core UI | M6 | preserve item routes and detail semantics | Planned |
@@ -56,8 +57,12 @@ Track route-by-route migration from AngularJS ownership to ASP.NET Core ownershi
 
 1. The route/state inventory above comes directly from `src/Module/AppModule.ts` and is the source of truth for route parity planning.
 2. The `version` state advertises query param `shareId`, while the current share loader in `ProductionController` reads `share` from `$location.search()`. Preserve current observable behavior first; cleanup can be a later deliberate change.
+3. M2 extracted the host-side ownership and fallback decision into `SolverService/SatisfactoryTools.Solver.Api/Services/HostRouteOwnershipPolicy.cs` so the boundary is explicit and testable without changing any Angular route behavior.
+4. In M2, ASP.NET Core explicitly owns `/v2/*`, `/index.php`, static file handling, and the legacy-shell fallback policy; all current Angular UI routes from `AppModule.ts` remain legacy-shell-owned.
+5. The host fallback allow-list for dotted bare version roots remains `/1.0`, `/1.0-ficsmas`, `/1.1`, `/1.1-ficsmas`, and `/1.2` even though Angular runtime-supported versions are narrower. Do not collapse that list until a later explicit route migration decision.
 
 ## Notes
 
 1. This matrix should be updated whenever route ownership changes.
 2. No route should be marked complete until its parity gate is green.
+3. The next planned slice after M2 is `M3 - Planner Domain Port Complete`.

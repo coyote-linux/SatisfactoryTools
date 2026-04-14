@@ -15,9 +15,9 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 ## Current Status
 
-- Current phase: **M1 completed**
-- Current milestone: **M1 - Unified ASP.NET Core Shell**
-- Current recommended slice: **M2 - Route-Level Strangler Scaffold**
+- Current phase: **M2 completed**
+- Current milestone: **M2 - Route-Level Strangler Scaffold**
+- Current recommended slice: **M3 - Planner Domain Port Complete**
 
 ## Completed Slice
 
@@ -30,6 +30,16 @@ The existing ASP.NET host now serves the Angular shell and `www/` asset tree dir
 1. `Program.cs` renders `www/index.php` without requiring PHP at runtime and serves static assets from the resolved frontend root.
 2. Integration tests cover root shell serving, bare version-root and deep-link fallback, runtime config injection parity, and `/v2/*` non-regression against shell fallback.
 3. Local Docker/docs now use the unified ASP.NET host instead of a PHP/Apache proxy path.
+
+### M2
+
+#### Outcome
+ASP.NET Core now owns an explicit, testable host route-ownership policy while preserving the current external behavior: `/v2/*` remains API-owned, static/file-like misses do not shell-fallback, supported bare version roots remain eligible for the legacy Angular shell, and all current Angular UI routes still stay on legacy-shell fallback.
+
+#### Completion Signals
+1. `Program.cs` delegates shell-fallback eligibility to `Services/HostRouteOwnershipPolicy.cs` instead of embedding the policy inline.
+2. Focused host-routing tests cover policy classification and integration boundaries for API-owned routes, shell-fallback-eligible routes, and non-fallback file-like/asset paths.
+3. The route ownership docs make the M2 boundary explicit and name the next slice without widening scope into Blazor or planner-domain migration.
 
 ### M0 Slice 1A
 
@@ -53,20 +63,20 @@ Captured file-backed planner parity fixtures F001-F008 inside the existing solve
 
 ## Immediate Next Slice
 
-### M2
+### M3
 
 #### Objective
-Make ASP.NET Core the explicit route owner and split migrated routes from legacy Angular fallback behavior without mixing in planner-domain porting.
+Port planner-side business logic to C# under tests before any production-planner UI cutover.
 
 #### Expected Work
-1. Define route ownership boundaries now that the shell host is unified.
-2. Keep Angular fallback behavior explicit and testable while preserving current routes.
-3. Continue preserving `/v2/*` compatibility endpoints as stable anchors.
+1. Port version normalization, request shaping, and result-domain logic out of Angular TypeScript into C#.
+2. Gate the port with the existing parity fixtures and any missing focused planner-domain tests.
+3. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
 
 #### Do Not Start Yet
-1. Do not start the Blazor planner route during route-ownership scaffolding.
-2. Do not mix planner-domain porting into the strangler scaffold slice.
-3. Do not change route shapes or `/v2/*` contracts while introducing route ownership boundaries.
+1. Do not start the Blazor planner UI route during planner-domain porting.
+2. Do not change route shapes or `/v2/*` contracts while porting planner logic.
+3. Do not mix deployment or remaining content-route migration into M3.
 
 ## Key Repo Truths To Preserve
 
@@ -83,6 +93,7 @@ Make ASP.NET Core the explicit route owner and split migrated routes from legacy
 ### Current App Verification
 - `yarn build`
 - `dotnet test "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj"`
+- If the local `SolverService/.../obj/` tree is permission-restricted on this machine, use `dotnet test "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj" --artifacts-path /tmp/satisfactorytools-m2-artifacts --logger "console;verbosity=minimal"`
 
 ### Current Live Deployment Pattern
 - app source deployed to `/srv/satisfactorytools/current`
