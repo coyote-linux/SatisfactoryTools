@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Added an optional production-planner debug panel so infeasible solve requests can show structured solver diagnostics directly in the UI.
 - Added a resumable `.NET` migration planning package under `.sisyphus/` with milestone sequencing, route/version parity notes, validation gates, risk tracking, and handoff templates.
 - Added file-backed planner parity fixtures `F001` through `F008` under `SolverService/SatisfactoryTools.Solver.Api.Tests/Fixtures/Planner/` to lock representative `1.1`, `1.1-ficsmas`, `1.2`, share, multiplier, Packager, and debug scenarios in executable tests.
+- Added a C# planner compatibility/request-shaping layer that mirrors the Angular planner's version normalization, storage-key mapping, legacy schema upgrades, resource defaulting, and canonical solver-request derivation under direct fixture-backed tests.
 
 ### Changed
 - Modernized the frontend build pipeline for current Node versions by replacing legacy webpack loader usage with built-in HTML asset handling and standard module imports.
