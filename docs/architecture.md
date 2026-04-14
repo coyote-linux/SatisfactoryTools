@@ -2,14 +2,14 @@
 
 ## Overview
 
-SatisfactoryTools is a browser-based AngularJS application bundled with webpack and served from the `www/` directory. The application is primarily a static frontend, but it is delivered through `www/index.php` so the server can provide cache-busted asset URLs and front-controller routing.
+SatisfactoryTools is a browser-based AngularJS application bundled with webpack and served from the `www/` directory. The application is primarily a static frontend, and the ASP.NET Core host now uses `www/index.php` as the shell template source so it can preserve the existing cache-busted asset URL and runtime-config behavior without requiring PHP at runtime.
 
 At runtime the application loads a single generated bundle, `www/assets/app.js`, then bootstraps the AngularJS module defined in `src/app.ts`. Route, component, directive, and dataset wiring is centralized in `src/Module/AppModule.ts`.
 
 ## Request and boot flow
 
-1. A web server serves `www/index.php` as the entry document.
-2. `www/index.php` sets `<base href="/">`, renders shell markup, and loads `/assets/app.js`.
+1. The ASP.NET Core host resolves the active frontend root and renders `www/index.php` as the entry document template.
+2. That shell keeps `<base href="/">`, renders the current markup, injects `window.SATISFACTORY_TOOLS_CONFIG`, and loads `/assets/app.js`.
 3. webpack builds that bundle from `src/app.ts` into `www/assets/app.js`.
 4. `src/app.ts` loads styles and third-party UI libraries, then creates the AngularJS `app` module.
 5. `src/Module/AppModule.ts` registers routes, controllers, directives, services, filters, and components.
@@ -86,7 +86,7 @@ For deployment, the frontend can run without the local solver service only if th
 - Output is written to `www/assets/app.js`.
 - `yarn start` runs webpack in watch mode only; it does not serve HTTP traffic.
 - `dotnet test SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj` validates the local C# solver contract and sample solve behavior.
-- `dotnet run --project SolverService/SatisfactoryTools.Solver.Api/SatisfactoryTools.Solver.Api.csproj --urls=http://0.0.0.0:8080` starts the local solver API.
+- `dotnet run --project SolverService/SatisfactoryTools.Solver.Api/SatisfactoryTools.Solver.Api.csproj --urls=http://0.0.0.0:8080` starts the unified local host for both the shell and `/v2/*`.
 
 ### Offline content generation
 
@@ -102,15 +102,13 @@ These scripts are content-maintenance tools, not part of the minimum runtime nee
 
 - Node.js 20+ for building the bundle.
 - Yarn 1.22.x (or `npx yarn@1.22.22 ...`).
-- .NET SDK 10 for the replacement solver service.
-- A PHP-capable web server because the entry document is `www/index.php`.
-- Apache rewrite support or equivalent front-controller fallback for HTML5 routes.
+- .NET SDK 10 for the unified host and replacement solver service.
 
 ### Required server behavior
 
 - The document root must be `www/`.
 - The application expects to be served from the site root because `www/index.php` sets `<base href="/">` and uses absolute `/assets/...` URLs.
-- Unknown non-file routes must fall back to `index.php`. The existing Apache rules live in `www/.htaccess`.
+- Unknown non-file routes must fall back to the rendered shell HTML while `/v2/*` keeps API ownership.
 - Static assets under `www/assets/` must be served directly.
 
 ### Current verified environment
@@ -120,27 +118,26 @@ These scripts are content-maintenance tools, not part of the minimum runtime nee
 
 ### External dependencies at runtime
 
-- Public deployments typically expose same-origin `/v2/solver` and `/v2/share/...` endpoints, with Apache or another reverse proxy forwarding those requests to the local ASP.NET service.
-- `www/index.php` can still inject an alternate solver URL when needed, but the planner's normal compatibility model is same-origin `/v2/*`.
+- Public deployments should expose same-origin `/v2/solver` and `/v2/share/...` directly from the ASP.NET host.
+- The host preserves `www/index.php` runtime config injection semantics, including the `SOLVER_URL` override and the default same-origin `/v2/*` model.
 
-In local development, the recommended path is to proxy same-origin `/v2/*` requests from the PHP/Apache web server to the local ASP.NET service.
+In local development, the recommended path is to let the ASP.NET host serve both the shell and the compatibility endpoints.
 
 If the deployment target blocks outbound network access, both solving and sharing can still work as long as `/v2/solver` and `/v2/share/...` are handled locally.
 
 ## Recommended local testing model
 
-For local testing, use one process to build the bundle and one PHP/Apache web server rooted at `www/`. The provided Docker Compose setup is intended for this exact workflow.
+For local testing, use one process to build the bundle and one ASP.NET host process. The provided Docker Compose setup is intended for this exact workflow.
 
 ## Docker Compose testing workflow
 
 The repository includes a simple `docker-compose.yml` for local testing.
 
 - `builder` uses Node 24 and runs `yarn install` plus `yarn build` against the repository root.
-- `solver` uses the .NET 10 SDK image and runs the local C# `/v2/*` compatibility service from `SolverService/`.
-- `web` uses the official `php:8.2-apache` image and serves `www/` directly from `/var/www/html`.
-- `web` enables `mod_proxy` and uses `docker/apache/local-v2-proxy.conf` to forward same-origin `/v2/solver` and `/v2/share/*` traffic to `http://solver:8080`.
-- `solver` stores compose-local share payloads under `/tmp/satisfactorytools-share-store` so share creation/loading works during a compose session.
-- Apache reads the existing `www/.htaccess`, so HTML5 routes continue to fall back to `index.php`.
+- `web` uses the .NET 10 SDK image and runs the unified ASP.NET Core host from `SolverService/`.
+- `web` serves the existing `www/` asset tree, renders the `www/index.php` shell template, and owns same-origin `/v2/*`.
+- `web` stores compose-local share payloads under `/tmp/satisfactorytools-share-store` so share creation/loading works during a compose session.
+- `web` waits for `www/assets/app.js` before starting so the Angular shell has its generated bundle available.
 
 Start the app with:
 
@@ -150,4 +147,4 @@ docker compose up
 
 Then open `http://localhost:8080/`.
 
-The web container waits for `www/assets/app.js` to exist before starting Apache, so a fresh clone can be started with one command.
+The web container waits for `www/assets/app.js` to exist before starting ASP.NET, so a fresh clone can be started with one command.
