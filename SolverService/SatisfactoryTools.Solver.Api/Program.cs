@@ -1,5 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.FileProviders;
 using SatisfactoryTools.Solver.Api.Contracts;
 using SatisfactoryTools.Solver.Api.Services;
 
@@ -14,12 +16,44 @@ builder.Services.AddCors((options) =>
 });
 
 builder.Services.AddSingleton<GameDataCatalog>();
+builder.Services.AddSingleton<SpaShellRenderer>();
 builder.Services.AddSingleton<ProductionPlannerSolver>();
 builder.Services.AddSingleton<ShareStore>();
 
 var app = builder.Build();
+var shellRenderer = app.Services.GetRequiredService<SpaShellRenderer>();
 
 app.UseCors();
+app.UseStaticFiles(new StaticFileOptions
+{
+	FileProvider = new PhysicalFileProvider(shellRenderer.FrontendRoot),
+	ContentTypeProvider = CreateContentTypeProvider(),
+});
+
+app.Use(async (HttpContext context, Func<Task> next) =>
+{
+	await next();
+
+	if (context.Response.HasStarted || context.Response.StatusCode != StatusCodes.Status404NotFound) {
+		return;
+	}
+
+	if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method)) {
+		return;
+	}
+
+	if (context.Request.Path.StartsWithSegments("/v2", StringComparison.OrdinalIgnoreCase)) {
+		return;
+	}
+
+	if (Path.HasExtension(context.Request.Path) && !IsSupportedVersionRoot(context.Request.Path)) {
+		return;
+	}
+
+	context.Response.StatusCode = StatusCodes.Status200OK;
+	context.Response.ContentType = "text/html; charset=utf-8";
+	await context.Response.WriteAsync(await shellRenderer.RenderAsync(context.RequestAborted), context.RequestAborted);
+});
 
 app.MapGet("/v2/", () => Results.Json(new {code = 200, active = true}));
 
@@ -79,6 +113,21 @@ app.MapGet("/v2/share/{shareId}", async (string shareId, ShareStore shareStore, 
 		return Results.Json(new {code = 500, error = exception.Message}, statusCode: 500);
 	}
 });
+
+app.MapGet("/index.php", async (SpaShellRenderer renderer, CancellationToken cancellationToken) =>
+	Results.Content(await renderer.RenderAsync(cancellationToken), "text/html; charset=utf-8"));
+
+static FileExtensionContentTypeProvider CreateContentTypeProvider()
+{
+	var provider = new FileExtensionContentTypeProvider();
+	provider.Mappings[".webmanifest"] = "application/manifest+json";
+	return provider;
+}
+
+static bool IsSupportedVersionRoot(PathString requestPath)
+{
+	return requestPath.Value is "/1.0" or "/1.0-ficsmas" or "/1.1" or "/1.1-ficsmas" or "/1.2";
+}
 
 app.Run();
 
