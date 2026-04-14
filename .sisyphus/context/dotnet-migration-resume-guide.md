@@ -15,27 +15,48 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 ## Current Status
 
-- Current phase: **Planning complete, execution not started**
+- Current phase: **M0 Slice 1B completed**
 - Current milestone: **M0 - Migration Baseline**
-- Current recommended slice: **M0 Slice 1 - Migration operating baseline**
+- Current recommended slice: **M1 - Unified ASP.NET Core Shell**
+
+## Completed Slice
+
+### M0 Slice 1A
+
+#### Outcome
+Locked the first compatibility-anchor edge contracts in the existing ASP.NET integration test harness and replaced placeholder migration docs with concrete route/version and fixture seed information.
+
+#### Completion Signals
+1. `SolverApiTests.cs` includes share-version, share-validation, invalid-share-id, and unknown-solver-member baseline tests.
+2. Route inventory and version facts are now explicit in the route parity matrix.
+3. Planner fixture catalog is seeded with current backing tests and next parity assertions.
+
+### M0 Slice 1B
+
+#### Outcome
+Captured file-backed planner parity fixtures F001-F008 inside the existing solver API test project, executed them through the current ASP.NET harness, and closed the local same-origin `/v2/*` testing gap in Docker Compose/docs.
+
+#### Completion Signals
+1. `SolverApiTests.cs` loads `Fixtures/Planner/F001.json` through `F008.json` and executes fixture-backed route/storage, solve, and share assertions.
+2. The planner fixtures doc marks F001-F008 as captured rather than seeded.
+3. `docker-compose.yml` and local docs describe same-origin `/v2/solver` and `/v2/share/*` proxying through the web container.
 
 ## Immediate Next Slice
 
-### M0 Slice 1
+### M1
 
 #### Objective
-Create the operating baseline required for safe migration work.
+Replace `www/index.php` and Apache-specific runtime responsibilities with ASP.NET Core hosting while keeping the Angular app behavior unchanged.
 
 #### Expected Work
-1. Add contract tests for `/v2/solver` and `/v2/share`.
-2. Create the first route/version inventory from `src/Module/AppModule.ts`.
-3. Capture the first planner characterization fixtures.
-4. Seed the remaining internal docs needed for execution if they do not already exist.
+1. Add an ASP.NET Core shell equivalent for the current PHP front controller.
+2. Preserve deep-link fallback, asset serving, and runtime solver config injection behavior.
+3. Keep `/v2/*` compatibility endpoints green while the host ownership changes.
 
 #### Do Not Start Yet
-1. Do not replace `www/index.php` before the baseline tests exist.
-2. Do not port planner logic before the fixture set exists.
-3. Do not change route ownership before route parity inventory exists.
+1. Do not start the Blazor planner route during host-shell takeover.
+2. Do not mix planner-domain porting into the shell replacement slice.
+3. Do not change route shapes or `/v2/*` contracts while moving host ownership.
 
 ## Key Repo Truths To Preserve
 
