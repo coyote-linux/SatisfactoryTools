@@ -19,6 +19,7 @@ builder.Services.AddSingleton<GameDataCatalog>();
 builder.Services.AddSingleton<HostRouteOwnershipPolicy>();
 builder.Services.AddSingleton<SpaShellRenderer>();
 builder.Services.AddSingleton<ProductionPlannerSolver>();
+builder.Services.AddSingleton<PlannerCompatibilityService>();
 builder.Services.AddSingleton<ShareStore>();
 
 var app = builder.Build();
