@@ -15,11 +15,21 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 ## Current Status
 
-- Current phase: **M0 Slice 1B completed**
-- Current milestone: **M0 - Migration Baseline**
-- Current recommended slice: **M1 - Unified ASP.NET Core Shell**
+- Current phase: **M1 completed**
+- Current milestone: **M1 - Unified ASP.NET Core Shell**
+- Current recommended slice: **M2 - Route-Level Strangler Scaffold**
 
 ## Completed Slice
+
+### M1
+
+#### Outcome
+The existing ASP.NET host now serves the Angular shell and `www/` asset tree directly, preserves runtime solver URL injection and deep-link fallback behavior, and keeps `/v2/*` API ownership unchanged.
+
+#### Completion Signals
+1. `Program.cs` renders `www/index.php` without requiring PHP at runtime and serves static assets from the resolved frontend root.
+2. Integration tests cover root shell serving, bare version-root and deep-link fallback, runtime config injection parity, and `/v2/*` non-regression against shell fallback.
+3. Local Docker/docs now use the unified ASP.NET host instead of a PHP/Apache proxy path.
 
 ### M0 Slice 1A
 
@@ -43,27 +53,27 @@ Captured file-backed planner parity fixtures F001-F008 inside the existing solve
 
 ## Immediate Next Slice
 
-### M1
+### M2
 
 #### Objective
-Replace `www/index.php` and Apache-specific runtime responsibilities with ASP.NET Core hosting while keeping the Angular app behavior unchanged.
+Make ASP.NET Core the explicit route owner and split migrated routes from legacy Angular fallback behavior without mixing in planner-domain porting.
 
 #### Expected Work
-1. Add an ASP.NET Core shell equivalent for the current PHP front controller.
-2. Preserve deep-link fallback, asset serving, and runtime solver config injection behavior.
-3. Keep `/v2/*` compatibility endpoints green while the host ownership changes.
+1. Define route ownership boundaries now that the shell host is unified.
+2. Keep Angular fallback behavior explicit and testable while preserving current routes.
+3. Continue preserving `/v2/*` compatibility endpoints as stable anchors.
 
 #### Do Not Start Yet
-1. Do not start the Blazor planner route during host-shell takeover.
-2. Do not mix planner-domain porting into the shell replacement slice.
-3. Do not change route shapes or `/v2/*` contracts while moving host ownership.
+1. Do not start the Blazor planner route during route-ownership scaffolding.
+2. Do not mix planner-domain porting into the strangler scaffold slice.
+3. Do not change route shapes or `/v2/*` contracts while introducing route ownership boundaries.
 
 ## Key Repo Truths To Preserve
 
 1. AngularJS SPA bootstrap: `src/app.ts`
 2. Route/version ownership: `src/Module/AppModule.ts`
-3. Current shell: `www/index.php`
-4. Current deep-link behavior: `www/.htaccess`
+3. Current shell template source: `www/index.php`
+4. Current deep-link fallback owner: `SolverService/SatisfactoryTools.Solver.Api/Program.cs`
 5. Current frontend build output: `www/assets/app.js`
 6. Existing compatibility endpoints: `SolverService/SatisfactoryTools.Solver.Api/Program.cs`
 7. Planner-heavy client logic lives in `ProductionController.ts`, `ProductionTab.ts`, `ProductionResultFactory.ts`, `Graph.ts`, `ProductionResult.ts`, and related node classes.

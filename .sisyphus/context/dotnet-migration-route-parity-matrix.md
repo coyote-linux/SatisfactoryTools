@@ -8,8 +8,8 @@ Track route-by-route migration from AngularJS ownership to ASP.NET Core ownershi
 
 | Route / State Group | Current Owner | Key Files | Target Owner | Planned Milestone | Compatibility Requirements | Status |
 |---|---|---|---|---|---|---|
-| Shell bootstrap | PHP + AngularJS | `www/index.php`, `src/app.ts` | ASP.NET Core host | M1 | preserve app shell behavior, `solverUrl` injection, asset loading, base href assumptions | Planned |
-| Deep-link fallback | Apache `.htaccess` | `www/.htaccess` | ASP.NET Core middleware/fallback routing | M1 | preserve current HTML5-mode deep links | Planned |
+| Shell bootstrap | ASP.NET Core + AngularJS | `www/index.php`, `src/app.ts`, `SolverService/.../Program.cs` | ASP.NET Core host | M1 | preserve app shell behavior, `solverUrl` injection, asset loading, base href assumptions | Preserved |
+| Deep-link fallback | ASP.NET Core fallback routing | `www/.htaccess`, `SolverService/.../Program.cs` | ASP.NET Core middleware/fallback routing | M1 | preserve current HTML5-mode deep links while keeping `/v2/*` off the shell fallback | Preserved |
 | Version route wrapper | AngularJS ui-router | `src/Module/AppModule.ts`, `src/Data/DataProvider.ts` | ASP.NET Core + migrated UI route layer | M2-M4 | preserve supported versions and normalization | Planned |
 | Home | AngularJS | `AppModule.ts`, `HomeController.ts`, `templates/Controllers/home.html` | ASP.NET Core UI | M6 | preserve path, visible behavior, version context | Planned |
 | Items list/detail | AngularJS | `ItemController.ts`, item templates, filters | ASP.NET Core UI | M6 | preserve item routes and detail semantics | Planned |
