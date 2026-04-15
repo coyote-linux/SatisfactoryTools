@@ -1,4 +1,4 @@
-import {DataSet, Network} from 'vis-network';
+import {DataSet, Edge, Network} from 'vis-network';
 import {IController, IScope, ITimeoutService} from 'angular';
 import ELK from 'elkjs/lib/elk.bundled';
 import cytoscape from 'cytoscape';
@@ -7,12 +7,12 @@ import {IVisEdge} from '@src/Tools/Production/Result/IVisEdge';
 import {IElkGraph} from '@src/Solver/IElkGraph';
 import {Strings} from '@src/Utils/Strings';
 import model from '@src/Data/Model';
-import {ProductionResult} from '@src/Tools/Production/Result/ProductionResult';
+import {IProductionPlanResult} from '@src/Tools/Production/IProductionPlanResult';
 
 export class VisualizationComponentController implements IController
 {
 
-	public result: ProductionResult;
+	public result: IProductionPlanResult;
 
 	public static $inject = ['$element', '$scope', '$timeout'];
 
@@ -37,8 +37,12 @@ export class VisualizationComponentController implements IController
 		this.unregisterWatcherCallback();
 	}
 
-	public useCytoscape(result: ProductionResult): void
+	public useCytoscape(result: IProductionPlanResult): void
 	{
+		if (!result.graph) {
+			return;
+		}
+
 		const options: cytoscape.CytoscapeOptions = {
 			container: this.$element[0],
 		};
@@ -106,50 +110,59 @@ export class VisualizationComponentController implements IController
 		const cy = cytoscape(options as any);
 	}
 
-	public useVis(result: ProductionResult): void
+	public useVis(result: IProductionPlanResult): void
 	{
 		const nodes = new DataSet<IVisNode>();
 		const edges = new DataSet<IVisEdge>();
+		let elkGraph: IElkGraph;
 
-		for (const node of result.graph.nodes) {
-			nodes.add(node.getVisNode());
-		}
-
-		for (const edge of result.graph.edges) {
-			const smooth: any = {
-				enabled: false,
-			};
-
-			if (edge.to.hasOutputTo(edge.from)) {
-				smooth.enabled = true;
-				smooth.type = 'curvedCW'
-				smooth.roundness = 0.2;
+		if (result.visualization) {
+			for (const node of result.visualization.nodes) {
+				nodes.add(node);
 			}
 
-			edges.add({
-				id: edge.id,
-				from: edge.from.id,
-				to: edge.to.id,
-				label: model.getItem(edge.itemAmount.item).prototype.name + '\n' + Strings.formatNumber(edge.itemAmount.amount) + ' / min',
-				color: {
-					color: 'rgba(105, 125, 145, 1)',
-					highlight: 'rgba(134, 151, 167, 1)',
-				},
-				font: {
-					color: 'rgba(238, 238, 238, 1)',
-				},
-				smooth: smooth,
-			} as any);
-		}
+			for (const edge of result.visualization.edges) {
+				edges.add(edge);
+			}
 
-		this.network = this.drawVisualisation(nodes, edges);
+			elkGraph = result.visualization.elkGraph;
+		} else if (result.graph) {
+			for (const node of result.graph.nodes) {
+				nodes.add(node.getVisNode());
+			}
 
-		this.$timeout(0).then(() => {
-			const elkGraph: IElkGraph = {
+			for (const edge of result.graph.edges) {
+				const smooth: NonNullable<IVisEdge['smooth']> = {
+					enabled: false,
+				};
+
+				if (edge.to.hasOutputTo(edge.from)) {
+					smooth.enabled = true;
+					smooth.type = 'curvedCW';
+					smooth.roundness = 0.2;
+				}
+
+				edges.add({
+					id: edge.id,
+					from: edge.from.id,
+					to: edge.to.id,
+					label: model.getItem(edge.itemAmount.item).prototype.name + '\n' + Strings.formatNumber(edge.itemAmount.amount) + ' / min',
+					color: {
+						color: 'rgba(105, 125, 145, 1)',
+						highlight: 'rgba(134, 151, 167, 1)',
+					},
+					font: {
+						color: 'rgba(238, 238, 238, 1)',
+					},
+					smooth: smooth,
+				});
+			}
+
+			elkGraph = {
 				id: 'root',
 				layoutOptions: {
 					'elk.algorithm': 'org.eclipse.elk.layered',
-					'org.eclipse.elk.layered.nodePlacement.favorStraightEdges': true as unknown as string, // fuck off typescript
+					'org.eclipse.elk.layered.nodePlacement.favorStraightEdges': true as unknown as string,
 					'org.eclipse.elk.spacing.nodeNode': 40 + '',
 				},
 				children: [],
@@ -170,7 +183,13 @@ export class VisualizationComponentController implements IController
 					target: edge.to.toString(),
 				});
 			});
+		} else {
+			return;
+		}
 
+		this.network = this.drawVisualisation(nodes, edges);
+
+		this.$timeout(0).then(() => {
 			this.$timeout(0).then(() => {
 				const elk = new ELK();
 				elk.layout(elkGraph).then((data) => {
@@ -199,29 +218,40 @@ export class VisualizationComponentController implements IController
 		});
 	}
 
-	public updateData(result: ProductionResult|undefined): void
+	public updateData(result: IProductionPlanResult|undefined): void
 	{
 		if (!result) {
 			return;
 		}
 
 		this.fitted = false;
-
-		let use;
-		use = 'vis';
-
-		if (use === 'cytoscape') {
-			this.useCytoscape(result);
-		} else {
-			this.useVis(result);
-		}
+		this.useVis(result);
 	}
 
 	private drawVisualisation(nodes: DataSet<IVisNode>, edges: DataSet<IVisEdge>): Network
 	{
+		const visEdges = new DataSet<Edge>();
+		visEdges.add(edges.get().map((edge) => {
+			if (edge.smooth?.enabled) {
+				return {
+					...edge,
+					smooth: {
+						enabled: true,
+						type: edge.smooth.type || 'curvedCW',
+						roundness: edge.smooth.roundness ?? 0.2,
+					},
+				};
+			}
+
+			return {
+				...edge,
+				smooth: false,
+			};
+		}));
+
 		return new Network(this.$element[0], {
 			nodes: nodes,
-			edges: edges,
+			edges: visEdges,
 		}, {
 			edges: {
 				labelHighlightBold: false,

@@ -6,6 +6,11 @@ export interface IVisEdge
 	title?: string;
 	arrows?: string;
 	id?: number;
+	smooth?: {
+		enabled: boolean;
+		type?: string;
+		roundness?: number;
+	};
 	color?: {
 		color: string,
 		highlight: string,

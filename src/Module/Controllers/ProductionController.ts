@@ -60,6 +60,7 @@ export class ProductionController
 
 	public static $inject = ['$scope', '$timeout', 'DataStorageService', '$location', '$rootScope'];
 	private readonly storageKey: string;
+	private readonly initialShareId: string|null;
 
 	public constructor(
 		private readonly scope: IProductionControllerScope,
@@ -69,6 +70,9 @@ export class ProductionController
 		private readonly $rootScope: IRootScope,
 	)
 	{
+		const query = this.$location.search();
+		this.initialShareId = typeof query.share === 'string' ? query.share : null;
+
 		if ($rootScope.version === '1.1' || $rootScope.version === '1.0') {
 			this.storageKey = 'production1';
 		} else if ($rootScope.version === '1.1-ficsmas' || $rootScope.version === '1.0-ficsmas') {
@@ -85,22 +89,24 @@ export class ProductionController
 		};
 		this.loadState();
 		$timeout(() => {
-			const query = this.$location.search();
-			if ('share' in query) {
+			if (this.initialShareId) {
 				axios({
 					method: 'GET',
-					url: '/v2/share/' + encodeURIComponent(query.share),
+					url: '/v2/share/' + encodeURIComponent(this.initialShareId),
 				}).then((response) => {
 					$timeout(0).then(() => {
 						const tabData: IProductionData = response.data.data;
 						tabData.metadata.name = 'Shared: ' + tabData.metadata.name;
 						const tab = new ProductionTab(this.scope, $rootScope.version, tabData);
-						this.tabs.push(tab);
+						this.tabs.unshift(tab);
 						this.tab = tab;
 						this.saveState();
 						this.$location.search('');
 					});
 				}).catch(() => {
+					if (!this.tabs.length) {
+						this.addEmptyTab();
+					}
 					this.$location.search('');
 				});
 			}
@@ -270,7 +276,9 @@ export class ProductionController
 	{
 		const loaded = this.dataStorageService.loadData(this.storageKey, null);
 		if (loaded === null) {
-			this.addEmptyTab();
+			if (!this.initialShareId) {
+				this.addEmptyTab();
+			}
 		} else {
 			for (const item of loaded) {
 				this.tabs.push(new ProductionTab(this.scope, this.$rootScope.version, item));
