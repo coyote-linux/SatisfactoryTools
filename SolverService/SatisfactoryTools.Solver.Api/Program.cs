@@ -72,6 +72,21 @@ app.MapPost("/v2/solver", async (HttpRequest request, ProductionPlannerSolver so
 	}
 });
 
+app.MapPost("/_internal/planner/calculate", async (HttpRequest request, InternalPlannerCalculationService calculationService, bool? showDebugOutput, CancellationToken cancellationToken) =>
+{
+	try {
+		var payload = await JsonSerializer.DeserializeAsync<PlannerState>(request.Body, SolverJson.Options, cancellationToken);
+		if (payload is null) {
+			return Results.BadRequest(new { error = "Invalid planner payload." });
+		}
+
+		var outcome = calculationService.Calculate(payload, showDebugOutput ?? false);
+		return Results.Json(InternalPlannerCalculationResponse.FromOutcome(outcome), SolverJson.InternalPlannerResponseOptions);
+	} catch (JsonException exception) {
+		return Results.BadRequest(new { error = exception.Message });
+	}
+});
+
 app.MapPost("/v2/share/", async (HttpRequest request, ShareStore shareStore, CancellationToken cancellationToken) =>
 {
 	try {

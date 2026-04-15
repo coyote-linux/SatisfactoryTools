@@ -19,7 +19,8 @@ public sealed class HostRouteOwnershipPolicy
 	{
 		var requestMethod = method ?? string.Empty;
 
-		if (requestPath.StartsWithSegments("/v2", StringComparison.OrdinalIgnoreCase)) {
+		if (requestPath.StartsWithSegments("/v2", StringComparison.OrdinalIgnoreCase)
+			|| requestPath.StartsWithSegments("/_internal/planner", StringComparison.OrdinalIgnoreCase)) {
 			return HostRouteOwner.Api;
 		}
 
