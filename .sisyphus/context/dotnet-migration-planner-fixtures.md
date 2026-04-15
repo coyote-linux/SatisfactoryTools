@@ -8,9 +8,9 @@ This document tracks the minimum representative planner cases that must be locke
 
 | Fixture ID | Version | Scenario | Current Coverage | Next Needed Assertion | Status |
 |---|---|---|---|---|---|
-| F001 | 1.1 | simple product solve | `Fixtures/Planner/F001.json` + fixture-driven `SolverApiTests.cs` + `PlannerResultDomainFactoryTests.cs` + `PlannerResultVisualizationFactoryTests.cs` + `PlannerResultCompositionServiceTests.cs` | keep as the primary happy-path anchor for planner result composition parity | Captured |
+| F001 | 1.1 | simple product solve | `Fixtures/Planner/F001.json` + fixture-driven `SolverApiTests.cs` + `PlannerResultDomainFactoryTests.cs` + `PlannerResultVisualizationFactoryTests.cs` + `PlannerResultCompositionServiceTests.cs` + `InternalPlannerCalculationServiceTests.cs` | keep as the primary happy-path anchor for planner result composition parity and host-resolved internal consumer coverage | Captured |
 | F002 | 1.1-ficsmas | seasonal dataset solve | `Fixtures/Planner/F002.json` + fixture-driven `SolverApiTests.cs` | use as the baseline seasonal dataset fixture in later parity suites | Captured |
-| F003 | 1.2 | basic planner solve | `Fixtures/Planner/F003.json` + fixture-driven `SolverApiTests.cs` + `PlannerResultCompositionServiceTests.cs` | preserve as the default non-seasonal `1.2` planner baseline and power-multiplier bridge anchor | Captured |
+| F003 | 1.2 | basic planner solve | `Fixtures/Planner/F003.json` + fixture-driven `SolverApiTests.cs` + `PlannerResultCompositionServiceTests.cs` + `InternalPlannerCalculationServiceTests.cs` | preserve as the default non-seasonal `1.2` planner baseline and power-multiplier bridge/consumer anchor | Captured |
 | F004 | 1.2 | share round-trip | `Fixtures/Planner/F004.json` + fixture-driven `SolverApiTests.cs` | preserve for future planner/share load compatibility checks | Captured |
 | F005 | 1.2 | recipe multiplier case | `Fixtures/Planner/F005.json` + fixture-driven `SolverApiTests.cs` + `PlannerResultDomainFactoryTests.cs` + `PlannerResultVisualizationFactoryTests.cs` + `PlannerResultCompositionServiceTests.cs` | reuse to lock planner-facing recipe-cost result composition parity after the new bridge layer | Captured |
 | F006 | 1.2 | Packager exception case | `Fixtures/Planner/F006.json` + fixture-driven `SolverApiTests.cs` + `PlannerResultDomainFactoryTests.cs` + `PlannerResultVisualizationFactoryTests.cs` | preserve as the Packager `1.0x` exception anchor for planner result composition and view-model parity | Captured |
@@ -65,5 +65,6 @@ This document tracks the minimum representative planner cases that must be locke
 4. **M3 slice 2 is now complete**: F001, F005, and F006 carry targeted `resultDomainExpectation` blocks consumed by `PlannerResultDomainFactoryTests.cs` to gate the first C# result-domain port.
 5. **M3 slice 3 is now complete**: F001, F005, and F006 also carry targeted `resultVisualizationExpectation` blocks consumed by `PlannerResultVisualizationFactoryTests.cs` to gate visual node/edge shaping parity.
 6. **M3 slice 4 is now complete**: `PlannerResultCompositionServiceTests.cs` uses F001/F003/F005 plus canonical request-parity coverage to gate the new internal planner result bridge.
-7. The next M3 slice is consuming that internal planner bridge from later planner-facing flows, not UI/route changes.
-8. `SolverService/SatisfactoryTools.Solver.Api.Tests/Fixtures/Planner/*.json` is now the authoritative captured artifact set for F001-F008.
+7. **M3 slice 5 is now complete**: `InternalPlannerCalculationServiceTests.cs` uses F001/F003 to gate the first host-resolved internal consumer seam over that bridge, while `SolverApiTests.cs` keeps `/v2/solver` locked to the legacy raw envelope.
+8. The next M3 slice is wiring that internal calculation seam into the first real planner-facing runtime flow, not UI/route changes.
+9. `SolverService/SatisfactoryTools.Solver.Api.Tests/Fixtures/Planner/*.json` is now the authoritative captured artifact set for F001-F008.

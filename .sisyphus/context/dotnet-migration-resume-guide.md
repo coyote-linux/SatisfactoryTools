@@ -17,8 +17,8 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 - Current phase: **M3 in progress**
 - Current milestone: **M3 - Planner Domain Port Complete**
-- Current completed slice: **M3 slice 4 - planner result composition / contract bridge (internal orchestration only)**
-- Current recommended slice: **M3 slice 5 - consume the internal planner bridge from later planner-facing flows without changing `/v2/*` yet**
+- Current completed slice: **M3 slice 5 - host-resolved internal planner bridge consumer seam**
+- Current recommended slice: **M3 slice 6 - wire the internal calculation seam into the first real planner-facing runtime flow without changing `/v2/*` yet**
 
 ## Completed Slice
 
@@ -73,9 +73,10 @@ Continue porting planner-side business logic to C# under tests before any produc
 1. Keep the planner compatibility/request-shaping layer stable and reusable.
 2. Keep the C# result-domain and result-visualization layers stable: raw-result parsing, graph generation, result aggregations, visual node/edge shaping, recipe labels/tooltips, and ELK payload construction are now covered by direct tests plus targeted fixture parity.
 3. Keep the new internal planner result composition bridge stable: it must continue deriving the canonical stripped solver request while composing planner-facing results from normalized planner state plus raw solver output.
-4. Preserve the planner-only `powerConsumptionMultiplier` input in that bridge, because `/v2/solver` request DTOs still do not carry the full planner-facing state used by current TypeScript result rendering.
-5. Wire the bridge into later planner-facing consumers only when that can happen without changing route ownership or `/v2/*` contracts.
-6. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
+4. Keep the host-resolved internal calculation seam stable as the preferred entrypoint for future server-side planner consumers.
+5. Preserve the planner-only `powerConsumptionMultiplier` input in that bridge, because `/v2/solver` request DTOs still do not carry the full planner-facing state used by current TypeScript result rendering.
+6. Wire the internal calculation seam into the first real planner-facing runtime flow only when that can happen without changing route ownership or `/v2/*` contracts.
+7. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
 
 #### Do Not Start Yet
 1. Do not start the Blazor planner UI route during planner-domain porting.
