@@ -4,12 +4,15 @@ namespace SatisfactoryTools.Solver.Api.Services;
 
 public sealed class PlannerResultDomainFactory
 {
+	private readonly PlannerResultVisualizationFactory visualizationFactory = new();
+
 	public PlannerResultDomain Create(SolverRequest request, IReadOnlyDictionary<string, double> response, GameDataDocument data)
 	{
 		var graph = CreateGraph(request, response, data);
 		return new PlannerResultDomain {
 			Graph = graph,
 			Details = CreateDetails(request, graph, data),
+			Visualization = visualizationFactory.Create(graph, data),
 		};
 	}
 

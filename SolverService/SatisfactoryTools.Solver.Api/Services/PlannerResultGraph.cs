@@ -1,3 +1,4 @@
+using System.Globalization;
 using SatisfactoryTools.Solver.Api.Contracts;
 
 namespace SatisfactoryTools.Solver.Api.Services;
@@ -258,6 +259,17 @@ public abstract class PlannerGraphNode
 
 	public abstract IReadOnlyList<PlannerResourceAmount> GetInputs();
 	public abstract IReadOnlyList<PlannerResourceAmount> GetOutputs();
+
+	public bool HasOutputTo(PlannerGraphNode target)
+	{
+		foreach (var edge in ConnectedEdges) {
+			if (ReferenceEquals(edge.From, this) && ReferenceEquals(edge.To, target)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }
 
 public sealed class PlannerRecipeNode : PlannerGraphNode
@@ -385,5 +397,12 @@ public static class PlannerResultMath
 	{
 		var factor = Math.Pow(10d, decimals);
 		return Math.Floor((value + JavaScriptNumberEpsilon) * factor) / factor;
+	}
+
+	public static string FormatNumber(double value, int decimals = 3)
+	{
+		var rounded = Round(value, decimals);
+		var formatted = rounded.ToString($"F{decimals}", CultureInfo.InvariantCulture);
+		return formatted.TrimEnd('0').TrimEnd('.');
 	}
 }
