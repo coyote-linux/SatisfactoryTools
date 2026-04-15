@@ -57,6 +57,11 @@
 - Reason: The final slice-7 review passed, but it surfaced non-blocking follow-ups around the local planner/result type contract, the guarded share-entry empty-array edge case, internal-route exposure/debug-leakage assumptions, and the absence of frontend regression coverage for the guarded Angular path.
 - Implication: The next slice should tighten those four areas without widening `/v2/*`, without deleting the legacy Angular solver path, and without starting UI cutover work.
 
+### D012 - M3 slice 8 proceeds as 8a boundary hardening before 8b browser/frontend regression coverage
+- Status: Accepted
+- Reason: The repo already has strong xUnit/API coverage for the guarded planner path, but it does not yet have committed browser/frontend regression infrastructure. That makes guarded boundary hardening a coherent first slice and browser/frontend regression coverage a coherent follow-on slice.
+- Implication: 8a may land the planner/result boundary tightening, shared-entry empty-array hardening, and internal-route/config/debug surface reduction without making any default-on decision; 8b is still required before widening guarded-path usage.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project
