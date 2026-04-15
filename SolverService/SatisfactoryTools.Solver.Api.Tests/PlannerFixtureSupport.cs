@@ -39,6 +39,15 @@ internal static class PlannerFixtureSupport
 		}
 	}
 
+	public static IEnumerable<object[]> PlannerFixtureIdsWithResultVisualizationExpectation()
+	{
+		foreach (var fixtureId in PlannerFixtureIds().Select((entry) => (string)entry[0])) {
+			if (LoadPlannerFixture(fixtureId).ResultVisualizationExpectation is not null) {
+				yield return [fixtureId];
+			}
+		}
+	}
+
 	public static PlannerFixture LoadPlannerFixture(string fixtureId)
 	{
 		var filePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Planner", fixtureId + ".json");
@@ -82,6 +91,7 @@ internal static class PlannerFixtureSupport
 		public PlannerFixtureSolveExpectation? SolveExpectation { get; init; }
 		public PlannerFixtureShareExpectation? ShareExpectation { get; init; }
 		public PlannerFixtureResultDomainExpectation? ResultDomainExpectation { get; init; }
+		public PlannerFixtureResultVisualizationExpectation? ResultVisualizationExpectation { get; init; }
 	}
 
 	public sealed class PlannerFixtureUiState
@@ -179,5 +189,21 @@ internal static class PlannerFixtureSupport
 		public bool IsVariable { get; init; }
 		public Dictionary<string, int> BuildingMachineCounts { get; init; } = [];
 		public Dictionary<string, double> BuildingAverage { get; init; } = [];
+	}
+
+	public sealed class PlannerFixtureResultVisualizationExpectation
+	{
+		public int NodeCount { get; init; }
+		public int EdgeCount { get; init; }
+		public Dictionary<string, string> NodeLabels { get; init; } = [];
+		public List<PlannerFixtureVisualizationEdgeExpectation> Edges { get; init; } = [];
+	}
+
+	public sealed class PlannerFixtureVisualizationEdgeExpectation
+	{
+		public string From { get; init; } = string.Empty;
+		public string To { get; init; } = string.Empty;
+		public string Label { get; init; } = string.Empty;
+		public bool SmoothEnabled { get; init; }
 	}
 }
