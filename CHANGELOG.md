@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Added file-backed planner parity fixtures `F001` through `F008` under `SolverService/SatisfactoryTools.Solver.Api.Tests/Fixtures/Planner/` to lock representative `1.1`, `1.1-ficsmas`, `1.2`, share, multiplier, Packager, and debug scenarios in executable tests.
 - Added a C# planner compatibility/request-shaping layer that mirrors the Angular planner's version normalization, storage-key mapping, legacy schema upgrades, resource defaulting, and canonical solver-request derivation under direct fixture-backed tests.
 - Added a C# non-visual planner result-domain layer that parses raw solver keys into graph nodes/edges and canonical planner aggregations under targeted fixture-backed parity tests.
+- Added a C# planner result visualization/view-model layer that mirrors the active Angular `ProductionResult` rendering path with browser-free node/edge payloads, recipe tooltip formatting, reciprocal-edge smoothing metadata, and ELK layout payload construction under targeted fixture-backed tests.
 
 ### Changed
 - Modernized the frontend build pipeline for current Node versions by replacing legacy webpack loader usage with built-in HTML asset handling and standard module imports.
@@ -57,3 +58,4 @@ All notable changes to this project will be documented in this file.
 - Fixed the solver debug panel contrast so diagnostic payloads remain readable against the dark planner theme.
 - Restored the header logo width so the brand mark keeps its intended proportions instead of rendering squished.
 - Restored unified ASP.NET shell parity for bare version-root routes such as `/1.2`, missing asset `404` handling, and empty `SOLVER_URL` fallback behavior.
+- Encoded dynamic game-data names in the new C# planner visualization labels and recipe tooltips so HTML-bearing view-model output no longer emits raw unescaped text.
