@@ -220,6 +220,27 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	}
 
 	[Fact]
+	public async Task InternalPlannerCalculateRouteReturnsDebugPayloadForNoResultWhenEnabled()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F007");
+
+		var response = await client.PostAsJsonAsync("/_internal/planner/calculate?showDebugOutput=true", fixture.PlannerState);
+		response.EnsureSuccessStatusCode();
+
+		await using var responseStream = await response.Content.ReadAsStreamAsync();
+		using var payload = await JsonDocument.ParseAsync(responseStream);
+		var root = payload.RootElement;
+
+		Assert.True(root.TryGetProperty("debug", out var debug));
+		Assert.Contains("feasible solution", debug.GetProperty("message").GetString(), StringComparison.OrdinalIgnoreCase);
+		Assert.False(root.GetProperty("details").GetProperty("hasOutput").GetBoolean());
+		Assert.Empty(root.GetProperty("graph").GetProperty("nodes").EnumerateArray());
+		Assert.Empty(root.GetProperty("graph").GetProperty("edges").EnumerateArray());
+		Assert.False(root.TryGetProperty("code", out _));
+		Assert.False(root.TryGetProperty("result", out _));
+	}
+
+	[Fact]
 	public async Task MissingGameVersionReturnsCompatibilityError()
 	{
 		var response = await client.PostAsJsonAsync("/v2/solver", new

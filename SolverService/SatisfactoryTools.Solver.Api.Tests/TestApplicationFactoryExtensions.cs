@@ -24,7 +24,12 @@ internal static class TestApplicationFactoryExtensions
 		});
 	}
 
-	public static HttpClient CreateFrontendClient(this WebApplicationFactory<Program> factory, string frontendRoot, string? solverUrl = null)
+	public static HttpClient CreateFrontendClient(
+		this WebApplicationFactory<Program> factory,
+		string frontendRoot,
+		string? solverUrl = null,
+		bool? useInternalPlannerCalculate = null,
+		string? internalPlannerCalculateUrl = null)
 	{
 		var settings = new Dictionary<string, string?>
 		{
@@ -33,6 +38,14 @@ internal static class TestApplicationFactoryExtensions
 
 		if (solverUrl is not null) {
 			settings["SOLVER_URL"] = solverUrl;
+		}
+
+		if (useInternalPlannerCalculate.HasValue) {
+			settings["Planner:UseInternalCalculate"] = useInternalPlannerCalculate.Value ? "true" : "false";
+		}
+
+		if (internalPlannerCalculateUrl is not null) {
+			settings["Planner:InternalCalculateUrl"] = internalPlannerCalculateUrl;
 		}
 
 		return factory.CreateConfiguredClient(settings);

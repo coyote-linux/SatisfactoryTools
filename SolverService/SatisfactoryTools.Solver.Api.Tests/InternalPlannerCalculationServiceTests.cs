@@ -71,6 +71,18 @@ public sealed class InternalPlannerCalculationServiceTests : IClassFixture<WebAp
 		Assert.Contains("\"visualization\"", json, StringComparison.Ordinal);
 	}
 
+	[Fact]
+	public void InternalPlannerRouteResponseProjectionIncludesDebugWhenRequested()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F007");
+		var outcome = calculationService.Calculate(fixture.PlannerState, fixture.UiState.ShowDebugOutput);
+		var response = InternalPlannerCalculationResponse.FromOutcome(outcome);
+
+		Assert.NotNull(response.Debug);
+		Assert.Contains("feasible solution", response.Debug!.Message, StringComparison.OrdinalIgnoreCase);
+		Assert.NotEmpty(response.Debug.Items);
+	}
+
 	private static PlannerState ClonePlannerState(PlannerState state, double? powerConsumptionMultiplier = null)
 	{
 		return new PlannerState
