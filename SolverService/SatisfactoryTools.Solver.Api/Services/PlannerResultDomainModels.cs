@@ -6,6 +6,7 @@ public sealed class PlannerResultDomain
 {
 	public required PlannerResultGraph Graph { get; init; }
 	public required PlannerResultDetails Details { get; init; }
+	public required PlannerResultVisualization Visualization { get; init; }
 }
 
 public sealed class PlannerResultDetails
