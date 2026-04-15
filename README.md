@@ -13,7 +13,7 @@ Satisfactory Tools for planning and building the perfect base.
 - Run `dotnet run --project SolverService/SatisfactoryTools.Solver.Api/SatisfactoryTools.Solver.Api.csproj`
 - Open the reported ASP.NET URL (or set `--urls=http://0.0.0.0:8080` for a fixed local port)
 
-The ASP.NET host now serves the existing `www/` shell and asset tree directly, including same-origin `/v2/solver` and `/v2/share/*` endpoints. The guarded internal planner route now has an explicit same-origin request gate, remains outside the public `/v2/*` compatibility surface, and stays behind the default-off `useInternalPlannerCalculate` rollout flag. If you need a non-default solver endpoint, set the `SOLVER_URL` environment variable before starting the ASP.NET host.
+The ASP.NET host now serves the existing `www/` shell and asset tree directly, including same-origin `/v2/solver` and `/v2/share/*` endpoints. The guarded internal planner route now has an explicit same-origin request gate, remains outside the public `/v2/*` compatibility surface, and is enabled by default through `useInternalPlannerCalculate`; set `Planner__UseInternalCalculate=false` to roll the ASP.NET host back to the legacy `/v2/solver` planner path, or `USE_INTERNAL_PLANNER_CALCULATE=false` if you still render the raw `www/index.php` shell template directly. If you deploy behind a reverse proxy or TLS terminator, make sure the ASP.NET host sees the public scheme and host so the same-origin access check continues to pass. If you need a non-default solver endpoint, set the `SOLVER_URL` environment variable before starting the ASP.NET host.
 
 The current stack is verified in CI on Node 24 and was smoke-tested locally on Node 22.
 
@@ -44,6 +44,8 @@ For local same-origin planner testing, `docker compose up` now starts:
 - a unified ASP.NET host on `http://localhost:8080/` that serves the Angular shell, static assets, and same-origin `/v2/*` endpoints.
 
 This means the browser can use the frontend's default same-origin `/v2/*` paths during local testing, including planner share creation/loading, without editing frontend TypeScript or requiring PHP/Apache at runtime.
+
+Compose now inherits the unified host's guarded planner default-on behavior. If you want the compose-local host to stay on the legacy planner path instead, set `PLANNER_USE_INTERNAL_CALCULATE=false` before `docker compose up`.
 
 The web container only waits for `www/assets/app.js` to exist before ASP.NET starts. If you want to guarantee that Compose is serving a freshly rebuilt frontend bundle rather than a previously generated local file, rerun `yarn build` first or remove `www/assets/app.js` before `docker compose up`.
 

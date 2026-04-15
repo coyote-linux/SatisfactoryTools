@@ -120,6 +120,9 @@ These scripts are content-maintenance tools, not part of the minimum runtime nee
 
 - Public deployments should expose same-origin `/v2/solver` and `/v2/share/...` directly from the ASP.NET host.
 - The host preserves `www/index.php` runtime config injection semantics, including the `SOLVER_URL` override and the default same-origin `/v2/*` model.
+- The guarded planner path now defaults to same-origin `/_internal/planner/calculate`; explicit rollback remains available through `Planner:UseInternalCalculate=false` on the ASP.NET host or `USE_INTERNAL_PLANNER_CALCULATE=false` if the raw PHP shell template is still rendered directly.
+
+For deployments behind a reverse proxy or TLS terminator, the ASP.NET host must receive the public scheme and host values for planner requests. The internal planner access policy compares the browser `Origin` header against `request.Scheme` plus `request.Host`, so mismatched forwarded values will cause same-origin planner requests to fail.
 
 In local development, the recommended path is to let the ASP.NET host serve both the shell and the compatibility endpoints.
 
@@ -137,6 +140,7 @@ The repository includes a simple `docker-compose.yml` for local testing.
 - `web` uses the .NET 10 SDK image and runs the unified ASP.NET Core host from `SolverService/`.
 - `web` serves the existing `www/` asset tree, renders the `www/index.php` shell template, and owns same-origin `/v2/*`.
 - `web` stores compose-local share payloads under `/tmp/satisfactorytools-share-store` so share creation/loading works during a compose session.
+- `web` now inherits the guarded planner default-on behavior unless `PLANNER_USE_INTERNAL_CALCULATE=false` is supplied to Compose as an explicit rollback override.
 - `web` waits for `www/assets/app.js` before starting so the Angular shell has its generated bundle available.
 
 Start the app with:

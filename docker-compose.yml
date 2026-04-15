@@ -18,7 +18,7 @@ services:
     working_dir: /workspace
     environment:
       ShareStore__Root: /tmp/satisfactorytools-share-store
-      Planner__UseInternalCalculate: ${PLANNER_USE_INTERNAL_CALCULATE:-false}
+      Planner__UseInternalCalculate: ${PLANNER_USE_INTERNAL_CALCULATE:-true}
     command: >
       bash -lc "until [ -f /workspace/www/assets/app.js ]; do echo 'Waiting for webpack build...'; sleep 1; done; dotnet run --project SolverService/SatisfactoryTools.Solver.Api/SatisfactoryTools.Solver.Api.csproj --urls=http://0.0.0.0:8080"
     restart: unless-stopped
