@@ -44,6 +44,8 @@ All notable changes to this project will be documented in this file.
 - Updated the host route-ownership policy and parity docs so `/_internal/planner/*` is treated as API-owned internal runtime space while `/v2/*` remains the preserved public compatibility surface.
 - Updated the ASP.NET shell config injection and local Docker Compose testing path so guarded internal planner calculation can be enabled for same-origin runtime testing without changing public `/v2/*` behavior.
 - Narrowed the guarded planner boundary so Angular keeps legacy graph-backed results separate from internal visualization-backed results, and removed the shell/runtime-configurable `internalPlannerCalculateUrl` surface from the guarded path.
+- Updated the unified shell so guarded planner calculation now defaults to the hardened same-origin internal route while preserving explicit config and environment rollback to the legacy `/v2/solver` path.
+- Updated Docker Compose and the test helpers so local unified-host workflows and default-path regressions now inherit the guarded planner default-on behavior unless an explicit rollback override is supplied.
 
 ### Removed
 - Removed `script-loader` and `angular-templatecache-loader` from the build dependency chain.
@@ -75,3 +77,4 @@ All notable changes to this project will be documented in this file.
 - Fixed the guarded share-entry bootstrap so `localStorage` values of `[]` no longer create an empty default tab over a shared planner route.
 - Reduced internal planner route leakage by dropping `graph` from the internal response, emitting debug only when explicitly requested, and returning generic internal validation errors instead of raw validation text.
 - Restricted `/_internal/planner/calculate` to same-origin requests so the guarded planner path now has an explicit host-side access gate while keeping `/v2/*` contracts and the default-off rollback path unchanged.
+- Fixed default-on guarded planner rollout coverage so the browser regression suite now proves both the new internal-route default and the explicit-false rollback back to `/v2/solver`.
