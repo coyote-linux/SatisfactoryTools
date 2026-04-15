@@ -27,6 +27,11 @@
 - Reason: Existing live deployment and frontend flows already depend on them.
 - Implication: Avoid API redesign during the main UI/runtime migration.
 
+### D006 - M3 visualization parity follows the active `ProductionResult` + `VisualizationComponentController` path
+- Status: Accepted
+- Reason: That is the live result-rendering path in the Angular app, while `ProductionToolResult.ts` is a legacy direct-visualization path and not the primary current source of truth.
+- Implication: The C# result visualization/view-model port should mirror node/edge/ELK payload shaping from the active path first and treat `ProductionToolResult.ts` only as a secondary cross-check.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project
