@@ -74,3 +74,4 @@ All notable changes to this project will be documented in this file.
 - Fixed the guarded planner runtime draft so share-loaded routes keep the shared tab active, raw PHP shell config treats `USE_INTERNAL_PLANNER_CALCULATE=false` as a real boolean, and visualization layout updates still apply ELK node positions to the live vis-network graph.
 - Fixed the guarded share-entry bootstrap so `localStorage` values of `[]` no longer create an empty default tab over a shared planner route.
 - Reduced internal planner route leakage by dropping `graph` from the internal response, emitting debug only when explicitly requested, and returning generic internal validation errors instead of raw validation text.
+- Restricted `/_internal/planner/calculate` to same-origin requests so the guarded planner path now has an explicit host-side access gate while keeping `/v2/*` contracts and the default-off rollback path unchanged.
