@@ -17,8 +17,8 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 - Current phase: **M3 in progress**
 - Current milestone: **M3 - Planner Domain Port Complete**
-- Current completed slice: **M3 slice 1 - planner compatibility/request-shaping layer**
-- Current recommended slice: **M3 slice 2 - result-domain port (graph/result aggregation only)**
+- Current completed slice: **M3 slice 2 - result-domain port (graph/result aggregation only)**
+- Current recommended slice: **M3 slice 3 - result visualization/view-model port (still no Blazor/UI cutover)**
 
 ## Completed Slice
 
@@ -71,8 +71,8 @@ Continue porting planner-side business logic to C# under tests before any produc
 
 #### Expected Work
 1. Keep the new planner compatibility/request-shaping layer stable and reusable.
-2. Port the result-domain slice next: `ProductionResultFactory`, `Graph`, `ProductionResult`, and related aggregation/parsing logic.
-3. Gate the result-domain port with the existing parity fixtures plus any missing focused planner-domain tests.
+2. Keep the new C# result-domain layer stable: raw-result parsing, graph generation, and result aggregations are now covered by direct tests plus targeted fixture parity.
+3. Port the deferred result visualization/view-model slice next: `ProductionToolResult.ts`, visual node/edge shaping, and other non-route/non-Blazor result presentation helpers.
 4. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
 
 #### Do Not Start Yet

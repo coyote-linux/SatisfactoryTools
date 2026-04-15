@@ -134,7 +134,7 @@ Make ASP.NET Core the route owner and explicitly split migrated routes from lega
 Port planner-side business logic to C# under tests before UI cutover.
 
 #### Current Execution Status
-The first M3 slice is complete and covers the planner compatibility/request-shaping layer only: route version normalization, storage-key parity, legacy schema upgrades, resource normalization/defaulting, and canonical solver-request derivation from planner state. The next slice is the result-domain port work (result graph parsing and aggregation), still without changing `/v2/*` contracts or starting Blazor cutover.
+The first two M3 slices are now complete. Slice 1 covers the planner compatibility/request-shaping layer only: route version normalization, storage-key parity, legacy schema upgrades, resource normalization/defaulting, and canonical solver-request derivation from planner state. Slice 2 adds the first non-UI result-domain port in C#: raw solver-result key parsing, graph/node/edge generation, machine-group power math, and the canonical result aggregations needed for buildings, items, input, raw resources, products/byproducts, alternates, power, and key flags. The next slice is the still-deferred result visualization/view-model layer (`ProductionToolResult.ts` and related non-UI visual result shaping), still without changing `/v2/*` contracts or starting Blazor cutover.
 
 #### Outputs
 1. version normalization logic,
