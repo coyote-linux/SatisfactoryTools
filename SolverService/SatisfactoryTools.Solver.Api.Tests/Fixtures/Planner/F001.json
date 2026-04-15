@@ -144,5 +144,22 @@
         "Desc_SmelterMk1_C": 8
       }
     }
+  },
+  "resultVisualizationExpectation": {
+    "nodeCount": 5,
+    "edgeCount": 4,
+    "nodeLabels": {
+      "Desc_OreIron_C#Mine": "<b>Iron Ore</b>\n60 / min",
+      "Recipe_IronPlate_C@100#Desc_ConstructorMk1_C": "<b>Iron Plate</b>\n2x Constructor",
+      "Desc_IronPlate_C#Product": "<b>Iron Plate</b>\n40 / min"
+    },
+    "edges": [
+      {
+        "from": "Recipe_IronPlate_C@100#Desc_ConstructorMk1_C",
+        "to": "Desc_IronPlate_C#Product",
+        "label": "Iron Plate\n40 / min",
+        "smoothEnabled": false
+      }
+    ]
   }
 }

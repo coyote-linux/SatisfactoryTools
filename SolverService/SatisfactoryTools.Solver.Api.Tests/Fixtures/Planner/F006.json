@@ -157,5 +157,21 @@
         "Desc_Packager_C": 10
       }
     }
+  },
+  "resultVisualizationExpectation": {
+    "nodeCount": 5,
+    "edgeCount": 4,
+    "nodeLabels": {
+      "Recipe_PackagedWater_C@100#Desc_Packager_C": "<b>Packaged Water</b>\n1x Packager",
+      "Desc_PackagedWater_C#Product": "<b>Packaged Water</b>\n60 / min"
+    },
+    "edges": [
+      {
+        "from": "Recipe_PackagedWater_C@100#Desc_Packager_C",
+        "to": "Desc_PackagedWater_C#Product",
+        "label": "Packaged Water\n60 / min",
+        "smoothEnabled": false
+      }
+    ]
   }
 }
