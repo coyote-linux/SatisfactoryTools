@@ -28,8 +28,7 @@ internal static class TestApplicationFactoryExtensions
 		this WebApplicationFactory<Program> factory,
 		string frontendRoot,
 		string? solverUrl = null,
-		bool? useInternalPlannerCalculate = null,
-		string? internalPlannerCalculateUrl = null)
+		bool? useInternalPlannerCalculate = null)
 	{
 		var settings = new Dictionary<string, string?>
 		{
@@ -42,10 +41,6 @@ internal static class TestApplicationFactoryExtensions
 
 		if (useInternalPlannerCalculate.HasValue) {
 			settings["Planner:UseInternalCalculate"] = useInternalPlannerCalculate.Value ? "true" : "false";
-		}
-
-		if (internalPlannerCalculateUrl is not null) {
-			settings["Planner:InternalCalculateUrl"] = internalPlannerCalculateUrl;
 		}
 
 		return factory.CreateConfiguredClient(settings);

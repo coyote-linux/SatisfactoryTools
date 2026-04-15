@@ -10,7 +10,6 @@ declare global
 		SATISFACTORY_TOOLS_CONFIG?: {
 			solverUrl?: string;
 			useInternalPlannerCalculate?: boolean;
-			internalPlannerCalculateUrl?: string;
 		};
 	}
 }

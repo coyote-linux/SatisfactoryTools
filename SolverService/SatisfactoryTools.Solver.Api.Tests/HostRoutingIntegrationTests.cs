@@ -27,22 +27,20 @@ public sealed class HostRoutingIntegrationTests : IClassFixture<WebApplicationFa
 		Assert.Contains("window.SATISFACTORY_TOOLS_CONFIG = {", html, StringComparison.Ordinal);
 		Assert.Contains("solverUrl: \"/v2/solver\"", html, StringComparison.Ordinal);
 		Assert.Contains("useInternalPlannerCalculate: false", html, StringComparison.Ordinal);
-		Assert.Contains("internalPlannerCalculateUrl: \"/_internal/planner/calculate\"", html, StringComparison.Ordinal);
+		Assert.DoesNotContain("internalPlannerCalculateUrl", html, StringComparison.Ordinal);
 		Assert.Contains($"/assets/app.js?v={frontendSite.BundleVersion}", html, StringComparison.Ordinal);
 		Assert.DoesNotContain("<?=", html, StringComparison.Ordinal);
 	}
 
 	[Fact]
-	public async Task DeepLinksServeShellAndPreserveRuntimeConfigOverrideInjection()
+	public async Task DeepLinksServeShellAndPreserveGuardedRuntimeFlagInjection()
 	{
 		using var frontendSite = FrontendTestSite.Create();
 		const string solverUrl = "https://solver.example.test/v2/solver";
-		const string internalPlannerCalculateUrl = "/_internal/planner/calculate";
 		using var frontendClient = factory.CreateFrontendClient(
 			frontendSite.RootPath,
 			solverUrl: solverUrl,
-			useInternalPlannerCalculate: true,
-			internalPlannerCalculateUrl: internalPlannerCalculateUrl);
+			useInternalPlannerCalculate: true);
 
 		var response = await frontendClient.GetAsync("/1.2/production?share=abc123");
 		response.EnsureSuccessStatusCode();
@@ -51,7 +49,7 @@ public sealed class HostRoutingIntegrationTests : IClassFixture<WebApplicationFa
 		Assert.Contains("<app></app>", html, StringComparison.Ordinal);
 		Assert.Contains($"solverUrl: \"{solverUrl}\"", html, StringComparison.Ordinal);
 		Assert.Contains("useInternalPlannerCalculate: true", html, StringComparison.Ordinal);
-		Assert.Contains($"internalPlannerCalculateUrl: \"{internalPlannerCalculateUrl}\"", html, StringComparison.Ordinal);
+		Assert.DoesNotContain("internalPlannerCalculateUrl", html, StringComparison.Ordinal);
 	}
 
 	[Theory]
