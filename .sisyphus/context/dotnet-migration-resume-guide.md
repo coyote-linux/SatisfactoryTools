@@ -17,8 +17,8 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 - Current phase: **M3 in progress**
 - Current milestone: **M3 - Planner Domain Port Complete**
-- Current completed slice: **M3 slice 6 - host-internal planner runtime route over the internal calculation seam**
-- Current recommended slice: **M3 slice 7 - adopt the internal planner runtime route from a guarded non-test caller while keeping `/v2/*` unchanged**
+- Current completed slice: **M3 slice 7 - guarded non-test caller adoption of the internal planner runtime route**
+- Current recommended slice: **M3 slice 8 - deepen guarded planner parity coverage before any default-on or UI-cutover decision**
 
 ## Completed Slice
 
@@ -76,8 +76,9 @@ Continue porting planner-side business logic to C# under tests before any produc
 4. Keep the host-resolved internal calculation seam stable as the preferred entrypoint for future server-side planner consumers.
 5. Keep the new host-internal runtime route stable as the first real runtime adopter of that seam, and preserve its separation from `/v2/*` compatibility contracts.
 6. Preserve the planner-only `powerConsumptionMultiplier` input in that bridge, because `/v2/solver` request DTOs still do not carry the full planner-facing state used by current TypeScript result rendering.
-7. Adopt the internal planner runtime route from the first guarded non-test caller only when that can happen without changing public route ownership or `/v2/*` contracts.
-8. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
+7. Keep the new guarded non-test planner caller stable: the legacy Angular planner can now opt into `/_internal/planner/calculate` through host-injected config, but `Solver.solveProduction()` and `/v2/solver` remain the untouched default compatibility path.
+8. Preserve the local guarded-client boundary: planner-facing `details`/`visualization` adoption should stay isolated to the production-planner path and should not spread internal route semantics across unrelated Angular code.
+9. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
 
 #### Do Not Start Yet
 1. Do not start the Blazor planner UI route during planner-domain porting.

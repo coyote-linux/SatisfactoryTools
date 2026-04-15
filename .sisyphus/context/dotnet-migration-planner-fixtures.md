@@ -14,7 +14,7 @@ This document tracks the minimum representative planner cases that must be locke
 | F004 | 1.2 | share round-trip | `Fixtures/Planner/F004.json` + fixture-driven `SolverApiTests.cs` | preserve for future planner/share load compatibility checks | Captured |
 | F005 | 1.2 | recipe multiplier case | `Fixtures/Planner/F005.json` + fixture-driven `SolverApiTests.cs` + `PlannerResultDomainFactoryTests.cs` + `PlannerResultVisualizationFactoryTests.cs` + `PlannerResultCompositionServiceTests.cs` | reuse to lock planner-facing recipe-cost result composition parity after the new bridge layer | Captured |
 | F006 | 1.2 | Packager exception case | `Fixtures/Planner/F006.json` + fixture-driven `SolverApiTests.cs` + `PlannerResultDomainFactoryTests.cs` + `PlannerResultVisualizationFactoryTests.cs` | preserve as the Packager `1.0x` exception anchor for planner result composition and view-model parity | Captured |
-| F007 | 1.2 | no-result debug case | `Fixtures/Planner/F007.json` + fixture-driven `SolverApiTests.cs` | use as the first locked `NO_RESULT` + debug planner artifact | Captured |
+| F007 | 1.2 | no-result debug case | `Fixtures/Planner/F007.json` + fixture-driven `SolverApiTests.cs` + `InternalPlannerCalculationServiceTests.cs` | preserve as the locked `NO_RESULT` + debug anchor for internal planner runtime parity and guarded caller validation | Captured |
 | F008 | 1.2 | manual-input recipe case | `Fixtures/Planner/F008.json` + fixture-driven `SolverApiTests.cs` | preserve as the manual-input/debug anchor for M3 parity work | Captured |
 
 ## Concrete Seed Definitions
@@ -67,5 +67,6 @@ This document tracks the minimum representative planner cases that must be locke
 6. **M3 slice 4 is now complete**: `PlannerResultCompositionServiceTests.cs` uses F001/F003/F005 plus canonical request-parity coverage to gate the new internal planner result bridge.
 7. **M3 slice 5 is now complete**: `InternalPlannerCalculationServiceTests.cs` uses F001/F003 to gate the first host-resolved internal consumer seam over that bridge, while `SolverApiTests.cs` keeps `/v2/solver` locked to the legacy raw envelope.
 8. **M3 slice 6 is now complete**: `SolverApiTests.cs` uses F001/F003 to gate the first host-internal runtime route over the internal calculation seam, while host-routing tests keep `/_internal/planner/*` API-owned and off shell fallback.
-9. The next M3 slice is adopting that internal planner runtime route from a guarded non-test caller, not UI/route changes.
-10. `SolverService/SatisfactoryTools.Solver.Api.Tests/Fixtures/Planner/*.json` is now the authoritative captured artifact set for F001-F008.
+9. **M3 slice 7 is now complete**: the guarded non-test caller adoption keeps the Angular production planner on a default-off host-injected branch that consumes internal planner `details`/`visualization`, while F007 now also locks internal no-result debug projection parity.
+10. The next M3 slice is deepening guarded planner parity coverage and default-on readiness, not public route changes or Blazor UI work.
+11. `SolverService/SatisfactoryTools.Solver.Api.Tests/Fixtures/Planner/*.json` is now the authoritative captured artifact set for F001-F008.

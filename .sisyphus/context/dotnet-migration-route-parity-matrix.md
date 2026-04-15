@@ -62,6 +62,7 @@ Track route-by-route migration from AngularJS ownership to ASP.NET Core ownershi
 4. In M2, ASP.NET Core explicitly owned `/v2/*`, `/index.php`, static file handling, and the legacy-shell fallback policy; all current Angular UI routes from `AppModule.ts` remained legacy-shell-owned.
 5. In M3 slice 6, ASP.NET Core also gained an internal-only planner runtime route under `/_internal/planner/*`; this is API-owned for host routing, but it is not part of the public `/v2/*` compatibility surface.
 6. The host fallback allow-list for dotted bare version roots remains `/1.0`, `/1.0-ficsmas`, `/1.1`, `/1.1-ficsmas`, and `/1.2` even though Angular runtime-supported versions are narrower. Do not collapse that list until a later explicit route migration decision.
+7. In M3 slice 7, the legacy Angular production planner gained a default-off guarded caller that can post full planner state to `/_internal/planner/calculate` through host-injected shell config, but `/{version}/production` still remains Angular-owned and `/v2/*` route ownership is unchanged.
 
 ## Notes
 
