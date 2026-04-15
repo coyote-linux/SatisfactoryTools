@@ -17,8 +17,8 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 - Current phase: **M3 in progress**
 - Current milestone: **M3 - Planner Domain Port Complete**
-- Current completed slice: **M3 slice 2 - result-domain port (graph/result aggregation only)**
-- Current recommended slice: **M3 slice 3 - result visualization/view-model port (still no Blazor/UI cutover)**
+- Current completed slice: **M3 slice 3 - result visualization/view-model port (non-browser vis/ELK payload shaping only)**
+- Current recommended slice: **M3 slice 4 - planner result composition / contract bridge (still no Blazor/UI cutover)**
 
 ## Completed Slice
 
@@ -70,10 +70,11 @@ Captured file-backed planner parity fixtures F001-F008 inside the existing solve
 Continue porting planner-side business logic to C# under tests before any production-planner UI cutover.
 
 #### Expected Work
-1. Keep the new planner compatibility/request-shaping layer stable and reusable.
-2. Keep the new C# result-domain layer stable: raw-result parsing, graph generation, and result aggregations are now covered by direct tests plus targeted fixture parity.
-3. Port the deferred result visualization/view-model slice next: `ProductionToolResult.ts`, visual node/edge shaping, and other non-route/non-Blazor result presentation helpers.
-4. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
+1. Keep the planner compatibility/request-shaping layer stable and reusable.
+2. Keep the C# result-domain and result-visualization layers stable: raw-result parsing, graph generation, result aggregations, visual node/edge shaping, recipe labels/tooltips, and ELK payload construction are now covered by direct tests plus targeted fixture parity.
+3. Port the planner-facing result composition / contract-bridge slice next so future UI work can consume planner state plus the C# result layers without depending on TypeScript-only result assembly.
+4. Preserve the planner-only `powerConsumptionMultiplier` input when designing that bridge, because `/v2/solver` request DTOs still do not carry the full planner-facing state used by current TypeScript result rendering.
+5. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
 
 #### Do Not Start Yet
 1. Do not start the Blazor planner UI route during planner-domain porting.
