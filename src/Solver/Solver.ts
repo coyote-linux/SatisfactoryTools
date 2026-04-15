@@ -2,15 +2,6 @@ import axios from 'axios';
 import {IProductionToolResponse} from '@src/Tools/Production/IProductionToolResponse';
 import {IProductionDataApiDebug, IProductionDataApiRequest, IProductionDataApiResponseEnvelope} from '@src/Tools/Production/IProductionData';
 
-declare global
-{
-	interface Window {
-		SATISFACTORY_TOOLS_CONFIG?: {
-			solverUrl?: string;
-		};
-	}
-}
-
 export class Solver
 {
 

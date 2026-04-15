@@ -7,6 +7,11 @@ declare global
 		angular: typeof angular;
 		jQuery: typeof jQuery;
 		$: typeof jQuery;
+		SATISFACTORY_TOOLS_CONFIG?: {
+			solverUrl?: string;
+			useInternalPlannerCalculate?: boolean;
+			internalPlannerCalculateUrl?: string;
+		};
 	}
 }
 
