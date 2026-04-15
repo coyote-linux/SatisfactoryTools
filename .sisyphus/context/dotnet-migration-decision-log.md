@@ -42,6 +42,11 @@
 - Reason: The migration still needs one internal entrypoint that later runtime planner flows can adopt incrementally without binding those future consumers directly to the lower-level composition bridge.
 - Implication: `InternalPlannerCalculationService` is an acceptable narrow consumer seam for M3 slice 5, but the next slice must wire it into the first real non-test planner-facing runtime flow while keeping `/v2/*` unchanged.
 
+### D009 - M3 slice 6 adopts the internal calculation seam through a host-internal route rather than through `/v2/solver`
+- Status: Accepted
+- Reason: `InternalPlannerCalculationService` requires full `PlannerState`, including planner-only fields such as `powerConsumptionMultiplier`, while `/v2/solver` intentionally remains the stripped public raw-solver contract.
+- Implication: The first real runtime consumer should be a host-internal route such as `/_internal/planner/calculate`, keeping `/v2/solver` and `/v2/share` unchanged while still moving planner-facing runtime behavior onto the server.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project
