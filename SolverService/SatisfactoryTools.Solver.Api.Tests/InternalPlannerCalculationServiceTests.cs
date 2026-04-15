@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using SatisfactoryTools.Solver.Api.Contracts;
@@ -54,6 +55,20 @@ public sealed class InternalPlannerCalculationServiceTests : IClassFixture<WebAp
 		Assert.Equal(1.2d, outcome.ResultDomain.Graph.Nodes.OfType<PlannerRecipeNode>().Select((node) => node.RecipeData.PowerConsumptionMultiplier).Distinct().Single());
 		AssertClose(19.2d, outcome.ResultDomain.Details.Power.Total.Average);
 		AssertClose(19.2d, outcome.ResultDomain.Details.Power.Total.Max);
+	}
+
+	[Fact]
+	public void InternalPlannerRouteResponseProjectionSerializesWithoutCycles()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F001");
+		var outcome = calculationService.Calculate(fixture.PlannerState, fixture.UiState.ShowDebugOutput);
+		var response = InternalPlannerCalculationResponse.FromOutcome(outcome);
+
+		var json = JsonSerializer.Serialize(response, SolverJson.InternalPlannerResponseOptions);
+
+		Assert.Contains("\"graph\"", json, StringComparison.Ordinal);
+		Assert.Contains("\"details\"", json, StringComparison.Ordinal);
+		Assert.Contains("\"visualization\"", json, StringComparison.Ordinal);
 	}
 
 	private static PlannerState ClonePlannerState(PlannerState state, double? powerConsumptionMultiplier = null)

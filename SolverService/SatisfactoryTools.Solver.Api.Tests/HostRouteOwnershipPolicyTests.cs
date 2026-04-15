@@ -12,6 +12,8 @@ public sealed class HostRouteOwnershipPolicyTests
 	[InlineData("GET", "/v2/", HostRouteOwner.Api)]
 	[InlineData("POST", "/v2/solver", HostRouteOwner.Api)]
 	[InlineData("GET", "/v2/share/abc123", HostRouteOwner.Api)]
+	[InlineData("POST", "/_internal/planner/calculate", HostRouteOwner.Api)]
+	[InlineData("GET", "/_internal/planner/not-a-route", HostRouteOwner.Api)]
 	[InlineData("GET", "/", HostRouteOwner.LegacyShell)]
 	[InlineData("HEAD", "/1.2/production", HostRouteOwner.LegacyShell)]
 	[InlineData("GET", "/1.0", HostRouteOwner.LegacyShell)]

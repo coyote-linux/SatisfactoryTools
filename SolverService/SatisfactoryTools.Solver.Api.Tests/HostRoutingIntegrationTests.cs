@@ -105,6 +105,19 @@ public sealed class HostRoutingIntegrationTests : IClassFixture<WebApplicationFa
 	}
 
 	[Fact]
+	public async Task UnknownInternalPlannerRouteDoesNotFallBackToShellHtml()
+	{
+		using var frontendSite = FrontendTestSite.Create();
+		using var frontendClient = factory.CreateFrontendClient(frontendSite.RootPath);
+
+		var response = await frontendClient.GetAsync("/_internal/planner/not-a-route");
+		Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+		var body = await response.Content.ReadAsStringAsync();
+		Assert.DoesNotContain("<!DOCTYPE html>", body, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public async Task MissingAssetPathDoesNotFallBackToShellHtml()
 	{
 		using var frontendSite = FrontendTestSite.Create();

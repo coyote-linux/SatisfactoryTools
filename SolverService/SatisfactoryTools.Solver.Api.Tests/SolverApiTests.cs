@@ -174,6 +174,52 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	}
 
 	[Fact]
+	public async Task InternalPlannerCalculateRouteReturnsPlannerFacingComposedOutputFromPlannerState()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F001");
+
+		var response = await client.PostAsJsonAsync("/_internal/planner/calculate", fixture.PlannerState);
+		response.EnsureSuccessStatusCode();
+
+		await using var responseStream = await response.Content.ReadAsStreamAsync();
+		using var payload = await JsonDocument.ParseAsync(responseStream);
+		var root = payload.RootElement;
+
+		Assert.True(root.TryGetProperty("graph", out var graph));
+		Assert.True(root.TryGetProperty("details", out var details));
+		Assert.True(root.TryGetProperty("visualization", out var visualization));
+		Assert.False(root.TryGetProperty("code", out _));
+		Assert.False(root.TryGetProperty("result", out _));
+
+		Assert.True(graph.GetProperty("nodes").GetArrayLength() > 0);
+		Assert.True(graph.GetProperty("edges").GetArrayLength() > 0);
+		Assert.Equal(40d, details.GetProperty("output").GetProperty("Desc_IronPlate_C").GetDouble());
+		Assert.True(visualization.GetProperty("nodes").GetArrayLength() > 0);
+		Assert.True(visualization.GetProperty("edges").GetArrayLength() > 0);
+	}
+
+	[Fact]
+	public async Task InternalPlannerCalculateRoutePreservesPlannerOnlyPowerConsumptionMultiplier()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F003");
+		var plannerState = ClonePlannerState(fixture.PlannerState, powerConsumptionMultiplier: 1.2d);
+
+		var response = await client.PostAsJsonAsync("/_internal/planner/calculate", plannerState);
+		response.EnsureSuccessStatusCode();
+
+		await using var responseStream = await response.Content.ReadAsStreamAsync();
+		using var payload = await JsonDocument.ParseAsync(responseStream);
+		var powerTotal = payload.RootElement
+			.GetProperty("details")
+			.GetProperty("power")
+			.GetProperty("total");
+
+		Assert.InRange(powerTotal.GetProperty("average").GetDouble(), 19.199d, 19.201d);
+		Assert.InRange(powerTotal.GetProperty("max").GetDouble(), 19.199d, 19.201d);
+		Assert.False(powerTotal.GetProperty("isVariable").GetBoolean());
+	}
+
+	[Fact]
 	public async Task MissingGameVersionReturnsCompatibilityError()
 	{
 		var response = await client.PostAsJsonAsync("/v2/solver", new
@@ -512,6 +558,44 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		Assert.Equal(30d, payload.Result["Desc_Fabric_C#Product"]);
 		Assert.InRange(payload.Result["Desc_PolymerResin_C#Input"], 29.999d, 30.001d);
 		Assert.InRange(payload.Result["Desc_Water_C#Mine"], 37.499d, 37.501d);
+	}
+
+	private static PlannerState ClonePlannerState(PlannerState state, double? powerConsumptionMultiplier = null)
+	{
+		return new PlannerState
+		{
+			Metadata = new PlannerMetadata
+			{
+				Name = state.Metadata.Name,
+				Icon = state.Metadata.Icon,
+				SchemaVersion = state.Metadata.SchemaVersion,
+				GameVersion = state.Metadata.GameVersion,
+			},
+			Request = new PlannerRequest
+			{
+				ResourceMax = new Dictionary<string, double>(state.Request.ResourceMax, StringComparer.Ordinal),
+				ResourceWeight = new Dictionary<string, double>(state.Request.ResourceWeight, StringComparer.Ordinal),
+				BlockedResources = [.. state.Request.BlockedResources],
+				BlockedRecipes = [.. state.Request.BlockedRecipes],
+				BlockedMachines = [.. state.Request.BlockedMachines],
+				AllowedAlternateRecipes = [.. state.Request.AllowedAlternateRecipes],
+				RecipeCostMultiplier = state.Request.RecipeCostMultiplier,
+				PowerConsumptionMultiplier = powerConsumptionMultiplier ?? state.Request.PowerConsumptionMultiplier,
+				SinkableResources = [.. state.Request.SinkableResources],
+				Production = state.Request.Production.Select((item) => new SolverProductionItem
+				{
+					Item = item.Item,
+					Type = item.Type,
+					Amount = item.Amount,
+					Ratio = item.Ratio,
+				}).ToList(),
+				Input = state.Request.Input.Select((item) => new SolverInputItem
+				{
+					Item = item.Item,
+					Amount = item.Amount,
+				}).ToList(),
+			},
+		};
 	}
 
 	[Fact]
