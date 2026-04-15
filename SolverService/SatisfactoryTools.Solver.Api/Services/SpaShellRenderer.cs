@@ -6,10 +6,10 @@ namespace SatisfactoryTools.Solver.Api.Services;
 internal sealed class SpaShellRenderer(IHostEnvironment environment, IConfiguration configuration)
 {
 	private const string SolverUrlPlaceholder = "<?= json_encode(getenv('SOLVER_URL') ?: '/v2/solver') ?>";
-	private const string UseInternalPlannerCalculatePlaceholder = "<?= json_encode(filter_var(getenv('USE_INTERNAL_PLANNER_CALCULATE') ?: false, FILTER_VALIDATE_BOOLEAN)) ?>";
+	private const string UseInternalPlannerCalculatePlaceholder = "<?= json_encode(getenv('USE_INTERNAL_PLANNER_CALCULATE') === false ? true : filter_var(getenv('USE_INTERNAL_PLANNER_CALCULATE'), FILTER_VALIDATE_BOOLEAN)) ?>";
 	private const string AssetVersionPlaceholder = "<?= filemtime(__DIR__ . '/assets/app.js') ?>";
 	private readonly string solverUrl = string.IsNullOrWhiteSpace(configuration["SOLVER_URL"]) ? "/v2/solver" : configuration["SOLVER_URL"]!;
-	private readonly bool useInternalPlannerCalculate = configuration.GetValue<bool>("Planner:UseInternalCalculate");
+	private readonly bool useInternalPlannerCalculate = configuration.GetValue("Planner:UseInternalCalculate", true);
 
 	public string FrontendRoot { get; } = FrontendRootResolver.Resolve(environment.ContentRootPath, configuration["Frontend:Root"] ?? configuration["FrontendRoot"]);
 
