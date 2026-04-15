@@ -32,6 +32,11 @@
 - Reason: That is the live result-rendering path in the Angular app, while `ProductionToolResult.ts` is a legacy direct-visualization path and not the primary current source of truth.
 - Implication: The C# result visualization/view-model port should mirror node/edge/ELK payload shaping from the active path first and treat `ProductionToolResult.ts` only as a secondary cross-check.
 
+### D007 - Planner result composition must preserve the TS split between public solver request and local planner-facing composition state
+- Status: Accepted
+- Reason: The frontend strips planner-only fields such as `powerConsumptionMultiplier` before `/v2/solver` but still uses the full planner-facing request when composing local planner results.
+- Implication: The C# bridge must derive the unchanged stripped solver request for public contract parity, then restore planner-only state only on an internal composition request when building planner-facing results.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project
