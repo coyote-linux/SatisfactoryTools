@@ -62,6 +62,11 @@
 - Reason: The repo already has strong xUnit/API coverage for the guarded planner path, but it does not yet have committed browser/frontend regression infrastructure. That makes guarded boundary hardening a coherent first slice and browser/frontend regression coverage a coherent follow-on slice.
 - Implication: 8a may land the planner/result boundary tightening, shared-entry empty-array hardening, and internal-route/config/debug surface reduction without making any default-on decision; 8b is still required before widening guarded-path usage.
 
+### D013 - Post-8b guarded-path widening remains a separate explicit gate
+- Status: Accepted
+- Reason: Browser/frontend regression coverage is now committed, but the guarded path is still default-off and `/_internal/planner/calculate` remains a callable same-origin route whose exposure should be reviewed deliberately before widening usage.
+- Implication: The next slice should evaluate rollback, route-access restriction, and whether guarded default-on is acceptable without mixing that decision into Blazor/UI cutover work.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project

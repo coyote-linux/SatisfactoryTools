@@ -17,8 +17,8 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 - Current phase: **M3 in progress**
 - Current milestone: **M3 - Planner Domain Port Complete**
-- Current completed slice: **M3 slice 8a - guarded planner boundary hardening**
-- Current recommended slice: **M3 slice 8b - add browser/frontend regression coverage before any default-on or UI-cutover decision**
+- Current completed slice: **M3 slice 8b - guarded browser/frontend regression coverage**
+- Current recommended slice: **M3 slice 9 - review guarded default-on readiness and internal-route restriction before any UI-cutover decision**
 
 ## Completed Slice
 
@@ -82,8 +82,8 @@ Continue porting planner-side business logic to C# under tests before any produc
 10. Keep the tightened planner/result type boundary stable: guarded planner results should remain visualization-backed and must not widen legacy frontend `Graph` expectations.
 11. Keep the guarded share-entry hardening stable for both null-storage and empty-array storage cases.
 12. Keep the internal planner hardening stable: no shell-configurable internal planner URL, no `graph` in the internal route response, opt-in debug only, and generic internal validation errors.
-13. Add browser/frontend regression coverage for guarded share activation, visualization layout, and hardened internal-route behavior before widening the guarded path beyond default-off use.
-14. Keep the default-on decision deferred until that browser/frontend coverage is green.
+13. Keep the new browser/frontend regression suite stable: guarded share activation, visualization-backed guarded rendering/layout, and guarded no-result debug/internal-route behavior should remain green in committed tests.
+14. Treat the guarded default-on decision as a separate post-8b gate: coverage is now in place, but widening guarded-path usage still requires an explicit review of `/_internal/planner/calculate` exposure, rollback expectations, and legacy-path coexistence.
 
 #### Do Not Start Yet
 1. Do not start the Blazor planner UI route during planner-domain porting.
@@ -106,6 +106,8 @@ Continue porting planner-side business logic to C# under tests before any produc
 - `yarn build`
 - `dotnet test "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj"`
 - If the local `SolverService/.../obj/` tree is permission-restricted on this machine, use `dotnet test "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj" --artifacts-path /tmp/satisfactorytools-dotnet-test-artifacts --logger "console;verbosity=minimal"`
+- Browser regression slice: `dotnet test "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj" --filter "FullyQualifiedName~PlannerBrowserRegressionTests" --artifacts-path /tmp/satisfactorytools-browser-test-artifacts --logger "console;verbosity=minimal"`
+- Playwright browser install is required before the browser regression slice; use the generated Playwright script from the test build output, or the equivalent `dotnet exec ... Microsoft.Playwright.dll install chromium` path if `pwsh` is unavailable.
 
 ### Current Live Deployment Pattern
 - app source deployed to `/srv/satisfactorytools/current`

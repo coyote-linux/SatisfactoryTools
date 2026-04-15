@@ -64,6 +64,7 @@ Track route-by-route migration from AngularJS ownership to ASP.NET Core ownershi
 6. The host fallback allow-list for dotted bare version roots remains `/1.0`, `/1.0-ficsmas`, `/1.1`, `/1.1-ficsmas`, and `/1.2` even though Angular runtime-supported versions are narrower. Do not collapse that list until a later explicit route migration decision.
 7. In M3 slice 7, the legacy Angular production planner gained a default-off guarded caller that can post full planner state to `/_internal/planner/calculate` through host-injected shell config, but `/{version}/production` still remains Angular-owned and `/v2/*` route ownership is unchanged.
 8. In M3 slice 8a, the guarded planner path stopped advertising `internalPlannerCalculateUrl` in shell/runtime config, and the internal route response narrowed to planner-facing `details`/`visualization` with opt-in debug only; route ownership remained unchanged and `/v2/*` compatibility promises stayed separate.
+9. In M3 slice 8b, `PlannerBrowserRegressionTests.cs` added committed real-browser coverage for guarded F004-style share activation, visualization-backed guarded rendering/layout, and F007 no-result debug/internal-route behavior while `/{version}/production` remained Angular-owned, guarded mode stayed default-off, and `/v2/*` ownership stayed unchanged.
 
 ## Notes
 
