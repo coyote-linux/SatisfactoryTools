@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {IProductionData, IProductionDataApiDebug} from '@src/Tools/Production/IProductionData';
-import {IInternalPlannerCalculationResponse} from '@src/Tools/Production/IProductionPlanResult';
+import {IGuardedProductionPlanResult, IInternalPlannerCalculationResponse} from '@src/Tools/Production/IProductionPlanResult';
 
 export class PlannerCalculationClient
 {
@@ -9,7 +9,7 @@ export class PlannerCalculationClient
 	{
 		axios({
 			method: 'post',
-			url: window.SATISFACTORY_TOOLS_CONFIG?.internalPlannerCalculateUrl || '/_internal/planner/calculate',
+			url: '/_internal/planner/calculate',
 			params: {
 				showDebugOutput: showDebugOutput,
 			},
@@ -17,7 +17,7 @@ export class PlannerCalculationClient
 		}).then((response) => {
 			const payload = response.data as IInternalPlannerCalculationResponse;
 			callback({
-				result: payload,
+				result: PlannerCalculationClient.toGuardedPlanResult(payload),
 				debug: payload.debug,
 				error: payload.error,
 			});
@@ -30,12 +30,20 @@ export class PlannerCalculationClient
 		});
 	}
 
+	private static toGuardedPlanResult(payload: IInternalPlannerCalculationResponse): IGuardedProductionPlanResult
+	{
+		return {
+			details: payload.details,
+			visualization: payload.visualization,
+		};
+	}
+
 }
 
 export interface IPlannerCalculationClientResponse
 {
 
-	result?: IInternalPlannerCalculationResponse;
+	result?: IGuardedProductionPlanResult;
 	debug?: IProductionDataApiDebug;
 	error?: string;
 

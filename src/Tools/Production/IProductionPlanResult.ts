@@ -12,16 +12,27 @@ export interface IPlannerVisualization
 	elkGraph: IElkGraph;
 }
 
-export interface IProductionPlanResult
+interface IProductionPlanResultBase
 {
 	details: IResultDetails;
-	graph?: Graph;
-	visualization?: IPlannerVisualization;
 }
 
-export interface IInternalPlannerCalculationResponse extends IProductionPlanResult
+export interface ILegacyProductionPlanResult extends IProductionPlanResultBase
 {
+	graph: Graph;
+	visualization?: undefined;
+}
+
+export interface IGuardedProductionPlanResult extends IProductionPlanResultBase
+{
+	graph?: undefined;
 	visualization: IPlannerVisualization;
+}
+
+export type IProductionPlanResult = ILegacyProductionPlanResult | IGuardedProductionPlanResult;
+
+export interface IInternalPlannerCalculationResponse extends IGuardedProductionPlanResult
+{
 	debug?: IProductionDataApiDebug;
 	error?: string;
 }
