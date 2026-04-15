@@ -66,9 +66,10 @@ Track route-by-route migration from AngularJS ownership to ASP.NET Core ownershi
 8. In M3 slice 8a, the guarded planner path stopped advertising `internalPlannerCalculateUrl` in shell/runtime config, and the internal route response narrowed to planner-facing `details`/`visualization` with opt-in debug only; route ownership remained unchanged and `/v2/*` compatibility promises stayed separate.
 9. In M3 slice 8b, `PlannerBrowserRegressionTests.cs` added committed real-browser coverage for guarded F004-style share activation, visualization-backed guarded rendering/layout, and F007 no-result debug/internal-route behavior while `/{version}/production` remained Angular-owned, guarded mode stayed default-off, and `/v2/*` ownership stayed unchanged.
 10. In M3 slice 9, `/_internal/planner/calculate` stayed API-owned but gained an explicit same-origin access gate, direct solver tests now lock allowed and rejected origin behavior, and guarded mode still remains default-off while `/{version}/production` and `/v2/*` ownership stay unchanged.
+11. In M3 slice 10, the unified shell flipped guarded planner calculation to default-on, browser regressions now exercise that default without test-only opt-in config, and explicit false rollback still sends planner solves through `/v2/solver` while `/{version}/production` and `/v2/*` ownership stay unchanged.
 
 ## Notes
 
 1. This matrix should be updated whenever route ownership changes.
 2. No route should be marked complete until its parity gate is green.
-3. The next planned slice after M3 slice 9 is the guarded default-on rollout review behind the hardened internal route while preserving the default-off rollback path.
+3. The next planned slice after M3 slice 10 is deployed-topology validation for the default-on guarded planner path, including proxy/public-origin smoke and rollback confirmation.

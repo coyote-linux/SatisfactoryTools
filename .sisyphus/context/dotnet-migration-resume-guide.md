@@ -17,8 +17,8 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 - Current phase: **M3 in progress**
 - Current milestone: **M3 - Planner Domain Port Complete**
-- Current completed slice: **M3 slice 9 - internal planner route same-origin hardening**
-- Current recommended slice: **M3 slice 10 - review guarded default-on rollout behind the hardened internal route while preserving config rollback**
+- Current completed slice: **M3 slice 10 - guarded internal planner default-on rollout with explicit rollback**
+- Current recommended slice: **M3 slice 11 - validate default-on guarded planner behavior under deployed public-host topology and confirm rollback smoke**
 
 ## Completed Slice
 
@@ -76,7 +76,7 @@ Continue porting planner-side business logic to C# under tests before any produc
 4. Keep the host-resolved internal calculation seam stable as the preferred entrypoint for future server-side planner consumers.
 5. Keep the new host-internal runtime route stable as the first real runtime adopter of that seam, and preserve its separation from `/v2/*` compatibility contracts.
 6. Preserve the planner-only `powerConsumptionMultiplier` input in that bridge, because `/v2/solver` request DTOs still do not carry the full planner-facing state used by current TypeScript result rendering.
-7. Keep the new guarded non-test planner caller stable: the legacy Angular planner can now opt into `/_internal/planner/calculate` through host-injected config, but `Solver.solveProduction()` and `/v2/solver` remain the untouched default compatibility path.
+7. Keep the new guarded non-test planner caller stable: the legacy Angular planner now defaults to `/_internal/planner/calculate` through host-injected config, but explicit false rollback and the legacy `Solver.solveProduction()` + `/v2/solver` compatibility path both remain intact.
 8. Preserve the local guarded-client boundary: planner-facing `details`/`visualization` adoption should stay isolated to the production-planner path and should not spread internal route semantics across unrelated Angular code.
 9. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
 10. Keep the tightened planner/result type boundary stable: guarded planner results should remain visualization-backed and must not widen legacy frontend `Graph` expectations.
@@ -84,7 +84,7 @@ Continue porting planner-side business logic to C# under tests before any produc
 12. Keep the internal planner hardening stable: no shell-configurable internal planner URL, no `graph` in the internal route response, opt-in debug only, and generic internal validation errors.
 13. Keep the new browser/frontend regression suite stable: guarded share activation, visualization-backed guarded rendering/layout, and guarded no-result debug/internal-route behavior should remain green in committed tests.
 14. Keep the new internal planner access hardening stable: `/_internal/planner/calculate` now requires same-origin requests and remains separate from `/v2/*` compatibility contracts.
-15. Treat guarded default-on as a separate post-9 gate: the internal route is now hardened, but widening guarded-path usage still requires an explicit deployment-topology and rollback review before changing the default.
+15. Treat public-host topology validation as the new post-10 gate: the internal route is hardened and guarded mode is now default-on in-repo, but deployed same-origin behavior still requires an explicit proxy/topology smoke and rollback confirmation before broader rollout confidence.
 
 #### Do Not Start Yet
 1. Do not start the Blazor planner UI route during planner-domain porting.
