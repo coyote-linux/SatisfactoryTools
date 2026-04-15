@@ -124,7 +124,9 @@
 
 	<script>
 		window.SATISFACTORY_TOOLS_CONFIG = {
-			solverUrl: <?= json_encode(getenv('SOLVER_URL') ?: '/v2/solver') ?>
+			solverUrl: <?= json_encode(getenv('SOLVER_URL') ?: '/v2/solver') ?>,
+			useInternalPlannerCalculate: <?= json_encode(filter_var(getenv('USE_INTERNAL_PLANNER_CALCULATE') ?: false, FILTER_VALIDATE_BOOLEAN)) ?>,
+			internalPlannerCalculateUrl: <?= json_encode(getenv('INTERNAL_PLANNER_CALCULATE_URL') ?: '/_internal/planner/calculate') ?>
 		};
 	</script>
 	<script src="/assets/app.js?v=<?= filemtime(__DIR__ . '/assets/app.js') ?>" async></script>
