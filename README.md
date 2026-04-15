@@ -13,7 +13,7 @@ Satisfactory Tools for planning and building the perfect base.
 - Run `dotnet run --project SolverService/SatisfactoryTools.Solver.Api/SatisfactoryTools.Solver.Api.csproj`
 - Open the reported ASP.NET URL (or set `--urls=http://0.0.0.0:8080` for a fixed local port)
 
-The ASP.NET host now serves the existing `www/` shell and asset tree directly, including same-origin `/v2/solver` and `/v2/share/*` endpoints. If you need a non-default solver endpoint, set the `SOLVER_URL` environment variable before starting the ASP.NET host.
+The ASP.NET host now serves the existing `www/` shell and asset tree directly, including same-origin `/v2/solver` and `/v2/share/*` endpoints. The guarded internal planner route now has an explicit same-origin request gate, remains outside the public `/v2/*` compatibility surface, and stays behind the default-off `useInternalPlannerCalculate` rollout flag. If you need a non-default solver endpoint, set the `SOLVER_URL` environment variable before starting the ASP.NET host.
 
 The current stack is verified in CI on Node 24 and was smoke-tested locally on Node 22.
 
