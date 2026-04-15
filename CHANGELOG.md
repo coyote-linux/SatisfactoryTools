@@ -42,6 +42,7 @@ All notable changes to this project will be documented in this file.
 - Updated the ASP.NET host to use an explicit route-ownership policy so `/v2/*`, static/file-like paths, and legacy Angular shell fallback remain separated and directly testable during the strangler migration.
 - Updated the host route-ownership policy and parity docs so `/_internal/planner/*` is treated as API-owned internal runtime space while `/v2/*` remains the preserved public compatibility surface.
 - Updated the ASP.NET shell config injection and local Docker Compose testing path so guarded internal planner calculation can be enabled for same-origin runtime testing without changing public `/v2/*` behavior.
+- Narrowed the guarded planner boundary so Angular keeps legacy graph-backed results separate from internal visualization-backed results, and removed the shell/runtime-configurable `internalPlannerCalculateUrl` surface from the guarded path.
 
 ### Removed
 - Removed `script-loader` and `angular-templatecache-loader` from the build dependency chain.
@@ -70,3 +71,5 @@ All notable changes to this project will be documented in this file.
 - Prevented unknown `/_internal/planner/*` paths from falling back to shell HTML, keeping the new internal planner runtime route isolated from the legacy Angular shell.
 - Restored no-result debug parity for guarded internal planner calculations by projecting optional solver debug output through the internal route while keeping that richer response internal-only.
 - Fixed the guarded planner runtime draft so share-loaded routes keep the shared tab active, raw PHP shell config treats `USE_INTERNAL_PLANNER_CALCULATE=false` as a real boolean, and visualization layout updates still apply ELK node positions to the live vis-network graph.
+- Fixed the guarded share-entry bootstrap so `localStorage` values of `[]` no longer create an empty default tab over a shared planner route.
+- Reduced internal planner route leakage by dropping `graph` from the internal response, emitting debug only when explicitly requested, and returning generic internal validation errors instead of raw validation text.
