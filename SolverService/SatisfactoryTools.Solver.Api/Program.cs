@@ -82,6 +82,8 @@ app.MapPost("/_internal/planner/calculate", async (HttpRequest request, Internal
 
 		var outcome = calculationService.Calculate(payload, showDebugOutput ?? false);
 		return Results.Json(InternalPlannerCalculationResponse.FromOutcome(outcome), SolverJson.InternalPlannerResponseOptions);
+	} catch (SolverValidationException exception) {
+		return Results.BadRequest(new { error = exception.Message });
 	} catch (JsonException exception) {
 		return Results.BadRequest(new { error = exception.Message });
 	}

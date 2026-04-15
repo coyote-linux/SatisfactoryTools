@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using SatisfactoryTools.Solver.Api.Contracts;
+
 namespace SatisfactoryTools.Solver.Api.Services;
 
 internal sealed class InternalPlannerCalculationResponse
@@ -6,6 +9,9 @@ internal sealed class InternalPlannerCalculationResponse
 	public required PlannerResultDetails Details { get; init; }
 	public required PlannerResultVisualization Visualization { get; init; }
 
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+	public SolverDebugInfo? Debug { get; init; }
+
 	public static InternalPlannerCalculationResponse FromOutcome(PlannerSolveCompositionOutcome outcome)
 	{
 		return new InternalPlannerCalculationResponse
@@ -13,6 +19,7 @@ internal sealed class InternalPlannerCalculationResponse
 			Graph = InternalPlannerGraphResponse.FromGraph(outcome.ResultDomain.Graph),
 			Details = outcome.ResultDomain.Details,
 			Visualization = outcome.ResultDomain.Visualization,
+			Debug = outcome.SolverExecution.Debug,
 		};
 	}
 }
