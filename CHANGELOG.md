@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Added an internal C# planner result composition bridge that derives the canonical stripped solver request, executes the solver, and composes planner-facing result-domain output from normalized planner state plus raw solver results without changing current `/v2/*` contracts.
 - Added a host-resolved internal planner calculation seam over the new C# bridge so future server-side planner flows can consume raw solver output plus planner-facing composed results without widening the current `/v2/*` API.
 - Added a host-internal planner runtime route at `/_internal/planner/calculate` so the server can execute planner-state-aware composed calculations through the new internal seam without changing the public `/v2/*` contracts.
+- Added a guarded Angular production-planner caller for `/_internal/planner/calculate` that can consume server-composed planner `details` and `visualization` through host-injected default-off runtime config while leaving `/v2/solver` as the legacy default path.
 
 ### Changed
 - Modernized the frontend build pipeline for current Node versions by replacing legacy webpack loader usage with built-in HTML asset handling and standard module imports.
@@ -40,6 +41,7 @@ All notable changes to this project will be documented in this file.
 - Updated the ASP.NET host to serve the Angular shell and `www/` asset tree directly, replacing PHP/Apache runtime duties for the active local testing path.
 - Updated the ASP.NET host to use an explicit route-ownership policy so `/v2/*`, static/file-like paths, and legacy Angular shell fallback remain separated and directly testable during the strangler migration.
 - Updated the host route-ownership policy and parity docs so `/_internal/planner/*` is treated as API-owned internal runtime space while `/v2/*` remains the preserved public compatibility surface.
+- Updated the ASP.NET shell config injection and local Docker Compose testing path so guarded internal planner calculation can be enabled for same-origin runtime testing without changing public `/v2/*` behavior.
 
 ### Removed
 - Removed `script-loader` and `angular-templatecache-loader` from the build dependency chain.
@@ -66,3 +68,5 @@ All notable changes to this project will be documented in this file.
 - Preserved planner-only result composition behavior in the new C# bridge so `powerConsumptionMultiplier` remains absent from the public solver request but is still applied to planner-facing power math during local composition.
 - Locked `/v2/solver` to its legacy raw envelope with regression coverage so the new internal planner calculation seam does not leak planner-facing `graph`, `details`, or `visualization` payloads.
 - Prevented unknown `/_internal/planner/*` paths from falling back to shell HTML, keeping the new internal planner runtime route isolated from the legacy Angular shell.
+- Restored no-result debug parity for guarded internal planner calculations by projecting optional solver debug output through the internal route while keeping that richer response internal-only.
+- Fixed the guarded planner runtime draft so share-loaded routes keep the shared tab active, raw PHP shell config treats `USE_INTERNAL_PLANNER_CALCULATE=false` as a real boolean, and visualization layout updates still apply ELK node positions to the live vis-network graph.
