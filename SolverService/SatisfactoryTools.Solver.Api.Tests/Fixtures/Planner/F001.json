@@ -76,5 +76,73 @@
       "Desc_OreIron_C#Mine": 60,
       "Desc_IronPlate_C#Product": 40
     }
+  },
+  "resultDomainExpectation": {
+    "graph": {
+      "recipeKeys": [
+        "Recipe_IngotIron_C@100#Desc_SmelterMk1_C",
+        "Recipe_IronPlate_C@100#Desc_ConstructorMk1_C"
+      ]
+    },
+    "flags": {
+      "hasInput": false,
+      "hasOutput": true,
+      "hasByproducts": true
+    },
+    "buildings": {
+      "amount": 4,
+      "buildingAmounts": {
+        "Desc_ConstructorMk1_C": 2,
+        "Desc_SmelterMk1_C": 2
+      },
+      "resources": {
+        "Desc_IronPlateReinforced_C": 4,
+        "Desc_Cable_C": 16,
+        "Desc_IronRod_C": 10,
+        "Desc_Wire_C": 16
+      }
+    },
+    "items": {
+      "Desc_OreIron_C": {
+        "produced": 60,
+        "consumed": 60,
+        "diff": 0
+      },
+      "Desc_IronIngot_C": {
+        "produced": 60,
+        "consumed": 60,
+        "diff": 0
+      },
+      "Desc_IronPlate_C": {
+        "produced": 40,
+        "consumed": 0,
+        "diff": 40
+      }
+    },
+    "rawResources": {
+      "Desc_OreIron_C": {
+        "enabled": true,
+        "max": 120,
+        "used": 60,
+        "usedPercentage": 50
+      }
+    },
+    "output": {
+      "Desc_IronPlate_C": 40
+    },
+    "alternatesNeeded": [],
+    "power": {
+      "totalAverage": 16,
+      "totalMax": 16,
+      "isVariable": false,
+      "buildingMachineCounts": {
+        "Desc_ConstructorMk1_C": 2,
+        "Desc_SmelterMk1_C": 2
+      },
+      "buildingAverage": {
+        "Desc_ConstructorMk1_C": 8,
+        "Desc_SmelterMk1_C": 8
+      }
+    }
   }
 }

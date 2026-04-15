@@ -86,5 +86,76 @@
       "Desc_Water_C#Mine": 60,
       "Desc_FluidCanister_C#Input": 60
     }
+  },
+  "resultDomainExpectation": {
+    "graph": {
+      "recipeKeys": [
+        "Recipe_PackagedWater_C@100#Desc_Packager_C"
+      ]
+    },
+    "flags": {
+      "hasInput": true,
+      "hasOutput": true,
+      "hasByproducts": true
+    },
+    "buildings": {
+      "amount": 1,
+      "buildingAmounts": {
+        "Desc_Packager_C": 1
+      },
+      "resources": {
+        "Desc_SteelPlate_C": 20,
+        "Desc_Rubber_C": 10,
+        "Desc_Plastic_C": 10
+      }
+    },
+    "items": {
+      "Desc_Water_C": {
+        "produced": 60,
+        "consumed": 60,
+        "diff": 0
+      },
+      "Desc_FluidCanister_C": {
+        "produced": 60,
+        "consumed": 60,
+        "diff": 0
+      },
+      "Desc_PackagedWater_C": {
+        "produced": 60,
+        "consumed": 0,
+        "diff": 60
+      }
+    },
+    "input": {
+      "Desc_FluidCanister_C": {
+        "max": 60,
+        "used": 60,
+        "usedPercentage": 100,
+        "producedExtra": 0
+      }
+    },
+    "rawResources": {
+      "Desc_Water_C": {
+        "enabled": true,
+        "max": 1000,
+        "used": 60,
+        "usedPercentage": 6
+      }
+    },
+    "output": {
+      "Desc_PackagedWater_C": 60
+    },
+    "alternatesNeeded": [],
+    "power": {
+      "totalAverage": 10,
+      "totalMax": 10,
+      "isVariable": false,
+      "buildingMachineCounts": {
+        "Desc_Packager_C": 1
+      },
+      "buildingAverage": {
+        "Desc_Packager_C": 10
+      }
+    }
   }
 }
