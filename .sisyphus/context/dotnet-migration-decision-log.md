@@ -52,6 +52,11 @@
 - Reason: `/_internal/planner/calculate` already returns planner-facing `graph`/`details`/`visualization`, while `Solver.solveProduction()` and `/v2/solver` remain the legacy raw-solver compatibility path.
 - Implication: The first guarded non-test caller should use a planner-specific client and local adapter in the Angular production planner, not overload `Solver.solveProduction()` or retrofit the internal route back into the public `{ code, result, debug }` envelope.
 
+### D011 - M3 slice 8 hardens the guarded planner boundary before any default-on decision
+- Status: Accepted
+- Reason: The final slice-7 review passed, but it surfaced non-blocking follow-ups around the local planner/result type contract, the guarded share-entry empty-array edge case, internal-route exposure/debug-leakage assumptions, and the absence of frontend regression coverage for the guarded Angular path.
+- Implication: The next slice should tighten those four areas without widening `/v2/*`, without deleting the legacy Angular solver path, and without starting UI cutover work.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project

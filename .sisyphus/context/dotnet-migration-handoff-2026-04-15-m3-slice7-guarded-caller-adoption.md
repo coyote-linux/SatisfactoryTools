@@ -60,22 +60,23 @@
 ## Review Status
 - Oracle review accepted the slice-7 boundary only if the guarded internal-route adoption stayed above `Solver.solveProduction()` and did not retrofit planner-facing results back into the public `/v2/solver` contract.
 - The implemented slice follows that boundary: the guarded planner client is local to the Angular production planner, while `/v2/solver` remains the untouched legacy path.
+- Final post-fix review passed with no blocking issues; remaining follow-ups were non-blocking and narrowed the next slice to planner/result type-boundary tightening, shared-entry empty-array hardening, internal-route exposure/debug-leakage hardening, and frontend regression coverage.
 
 ## Last Green State
-- Commit SHA: `fc22c4f`
+- Commit SHA: `845d885`
 - Why this is green:
-  - This is the last committed branch state before the slice-7 working-tree changes; slice-7 validation is green in the current working tree with no public `/v2/*` contract changes applied.
+  - This is the final committed and pushed slice-7 state after the guarded caller fixes, automated verification, live guarded browser QA, and the post-fix review pass; `/v2/*` compatibility remains unchanged.
 
 ## Open Issues / Blockers
-- The guarded internal planner caller is intentionally default-off until wider parity confidence is built.
-- `/_internal/planner/calculate` now includes optional debug payloads for guarded runtime parity; keep that response internal-only and separate from `/v2/solver`.
-- The Angular planner still has two runtime solve paths; do not delete the legacy path until a later explicit default-on or cutover slice proves the guarded path ready.
+- The guarded internal planner caller is intentionally default-off until slice 8 tightens the planner/result type boundary and adds frontend regression coverage around the guarded share and visualization behaviors.
+- `/_internal/planner/calculate` now includes optional debug payloads for guarded runtime parity; slice 8 should keep that response internal-only in practice and reduce exposure/debug-leakage assumptions before any default-on decision.
+- The Angular planner still has two runtime solve paths; do not delete the legacy path until the guarded share-entry empty-array edge case is hardened and the reviewed slice-8 boundary is complete.
 
 ## Decisions Updated
 - M3 slice 7 is accepted as a guarded planner-specific client above `Solver.solveProduction()` rather than as a retrofit of planner-facing output into the public `/v2/solver` envelope.
 
 ## Exact Next Slice
-- M3 slice 8 - deepen guarded planner parity coverage and default-on readiness for the internal planner caller without changing `/v2/*` contracts or starting Blazor UI cutover.
+- M3 slice 8 - tighten the guarded planner boundary before any default-on decision by tightening the planner/result type contract, hardening the shared-entry empty-array edge case, reducing internal-route exposure/debug-leakage assumptions, and adding frontend regression coverage without changing `/v2/*` contracts or starting Blazor UI cutover.
 
 ## Resume Notes For The Next Session
 1. Read `.sisyphus/plans/dotnet-migration-plan.md`
@@ -84,4 +85,4 @@
 4. Read `.sisyphus/context/dotnet-migration-route-parity-matrix.md`
 5. Read `.sisyphus/context/dotnet-migration-decision-log.md`
 6. Read `.sisyphus/context/dotnet-migration-handoff-2026-04-15-m3-slice7-guarded-caller-adoption.md`
-7. Keep the guarded planner client default-off while tightening parity coverage around no-result/debug behavior, visualization stability, and default-on readiness.
+7. Keep the guarded planner client default-off while tightening the planner/result type boundary, hardening the shared-entry empty-array edge case, reducing internal-route exposure/debug-leakage assumptions, and adding frontend regression coverage for guarded share and visualization behavior.
