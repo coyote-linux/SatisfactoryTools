@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Added a C# non-visual planner result-domain layer that parses raw solver keys into graph nodes/edges and canonical planner aggregations under targeted fixture-backed parity tests.
 - Added a C# planner result visualization/view-model layer that mirrors the active Angular `ProductionResult` rendering path with browser-free node/edge payloads, recipe tooltip formatting, reciprocal-edge smoothing metadata, and ELK layout payload construction under targeted fixture-backed tests.
 - Added an internal C# planner result composition bridge that derives the canonical stripped solver request, executes the solver, and composes planner-facing result-domain output from normalized planner state plus raw solver results without changing current `/v2/*` contracts.
+- Added a host-resolved internal planner calculation seam over the new C# bridge so future server-side planner flows can consume raw solver output plus planner-facing composed results without widening the current `/v2/*` API.
 
 ### Changed
 - Modernized the frontend build pipeline for current Node versions by replacing legacy webpack loader usage with built-in HTML asset handling and standard module imports.
@@ -61,3 +62,4 @@ All notable changes to this project will be documented in this file.
 - Restored unified ASP.NET shell parity for bare version-root routes such as `/1.2`, missing asset `404` handling, and empty `SOLVER_URL` fallback behavior.
 - Encoded dynamic game-data names in the new C# planner visualization labels and recipe tooltips so HTML-bearing view-model output no longer emits raw unescaped text.
 - Preserved planner-only result composition behavior in the new C# bridge so `powerConsumptionMultiplier` remains absent from the public solver request but is still applied to planner-facing power math during local composition.
+- Locked `/v2/solver` to its legacy raw envelope with regression coverage so the new internal planner calculation seam does not leak planner-facing `graph`, `details`, or `visualization` payloads.
