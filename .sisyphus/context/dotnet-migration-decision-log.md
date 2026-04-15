@@ -47,6 +47,11 @@
 - Reason: `InternalPlannerCalculationService` requires full `PlannerState`, including planner-only fields such as `powerConsumptionMultiplier`, while `/v2/solver` intentionally remains the stripped public raw-solver contract.
 - Implication: The first real runtime consumer should be a host-internal route such as `/_internal/planner/calculate`, keeping `/v2/solver` and `/v2/share` unchanged while still moving planner-facing runtime behavior onto the server.
 
+### D010 - M3 slice 7 keeps guarded internal planner adoption above `Solver.solveProduction()`
+- Status: Accepted
+- Reason: `/_internal/planner/calculate` already returns planner-facing `graph`/`details`/`visualization`, while `Solver.solveProduction()` and `/v2/solver` remain the legacy raw-solver compatibility path.
+- Implication: The first guarded non-test caller should use a planner-specific client and local adapter in the Angular production planner, not overload `Solver.solveProduction()` or retrofit the internal route back into the public `{ code, result, debug }` envelope.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project
