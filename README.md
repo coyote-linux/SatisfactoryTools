@@ -26,6 +26,18 @@ Any pull requests are welcome, though some rules must be followed:
 ## Development
 Run `yarn start` to start the automated build process. It will watch over the code and rebuild it on change.
 
+### Verification
+
+- Frontend build: `yarn build`
+- Core .NET suite: `dotnet test "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj"`
+- Guarded browser regression suite:
+  1. run `yarn build` so `www/assets/app.js` is fresh,
+  2. run `dotnet build "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj" --artifacts-path /tmp/satisfactorytools-browser-test-artifacts`,
+  3. install Playwright Chromium from the built test output with the generated Playwright script or `dotnet exec ... Microsoft.Playwright.dll install chromium`,
+  4. run `dotnet test "SolverService/SatisfactoryTools.Solver.Api.Tests/SatisfactoryTools.Solver.Api.Tests.csproj" --filter "FullyQualifiedName~PlannerBrowserRegressionTests" --artifacts-path /tmp/satisfactorytools-browser-test-artifacts --logger "console;verbosity=minimal"`.
+
+CircleCI currently enforces the frontend path with `yarn install` and `yarn buildCI`. The .NET and Playwright-based browser regression suites are available in-repo for local and review validation even though they are not yet wired into CircleCI.
+
 For local same-origin planner testing, `docker compose up` now starts:
 
 - a Node builder that produces `www/assets/app.js`,
