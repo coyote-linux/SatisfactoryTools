@@ -285,7 +285,7 @@ export class ProductionController
 			}
 			if (this.tabs.length) {
 				this.tab = this.tabs[0];
-			} else {
+			} else if (!this.initialShareId) {
 				this.addEmptyTab();
 			}
 		}
