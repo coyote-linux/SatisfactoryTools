@@ -232,6 +232,26 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	}
 
 	[Fact]
+	public async Task SolverEndpointKeepsTheExistingEnvelopeWithoutPlannerFacingPayloads()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F001");
+		Assert.NotNull(fixture.SolverRequest);
+
+		var response = await client.PostAsJsonAsync("/v2/solver", fixture.SolverRequest!);
+		response.EnsureSuccessStatusCode();
+
+		await using var responseStream = await response.Content.ReadAsStreamAsync();
+		using var payload = await JsonDocument.ParseAsync(responseStream);
+		var root = payload.RootElement;
+
+		Assert.Equal(200, root.GetProperty("code").GetInt32());
+		Assert.Equal(JsonValueKind.Object, root.GetProperty("result").ValueKind);
+		Assert.False(root.TryGetProperty("graph", out _));
+		Assert.False(root.TryGetProperty("details", out _));
+		Assert.False(root.TryGetProperty("visualization", out _));
+	}
+
+	[Fact]
 	public async Task RecipeCostMultiplierIncreasesRequiredRawResources()
 	{
 		var baseRequest = new
