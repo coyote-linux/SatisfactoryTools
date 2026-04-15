@@ -7,9 +7,10 @@ import {Strings} from '@src/Utils/Strings';
 import {IItemSchema} from '@src/Schema/IItemSchema';
 import {Callbacks} from '@src/Utils/Callbacks';
 import {IProductionData, IProductionDataApiDebug, IProductionDataApiRequest, IProductionDataRequestInput, IProductionDataRequestItem} from '@src/Tools/Production/IProductionData';
+import {IProductionPlanResult} from '@src/Tools/Production/IProductionPlanResult';
 import {ResultStatus} from '@src/Tools/Production/ResultStatus';
 import {Solver} from '@src/Solver/Solver';
-import {ProductionResult} from '@src/Tools/Production/Result/ProductionResult';
+import {PlannerCalculationClient} from '@src/Tools/Production/PlannerCalculationClient';
 import {ProductionResultFactory} from '@src/Tools/Production/Result/ProductionResultFactory';
 import {DataProvider} from '@src/Data/DataProvider';
 import {IRecipeSchema} from '@src/Schema/IRecipeSchema';
@@ -40,7 +41,7 @@ export class ProductionTab
 	public resultTab: string = 'visualization';
 	public shareLink: string = '';
 	public resultStatus: ResultStatus = ResultStatus.NO_INPUT;
-	public resultNew: ProductionResult|undefined;
+	public resultNew: IProductionPlanResult|undefined;
 	public easter: boolean = false;
 	public solverDebug: IProductionDataApiDebug|undefined;
 	public solverError: string = '';
@@ -109,6 +110,30 @@ export class ProductionTab
 		this.resultStatus = ResultStatus.CALCULATING;
 
 		const calc = () => {
+			if (window.SATISFACTORY_TOOLS_CONFIG?.useInternalPlannerCalculate) {
+				PlannerCalculationClient.calculate(this.data, this.state.showDebugOutput, (response) => {
+					const res = () => {
+						this.solverDebug = response.debug;
+						this.solverError = response.error || '';
+						if (!response.result || !response.result.details.hasOutput) {
+							this.resultNew = undefined;
+							this.resultStatus = ResultStatus.NO_RESULT;
+							return;
+						}
+
+						this.resultNew = response.result;
+						this.resultStatus = ResultStatus.RESULT;
+					};
+
+					if ($timeout) {
+						$timeout(0).then(res);
+					} else {
+						res();
+					}
+				});
+				return;
+			}
+
 			const apiRequest: IProductionDataApiRequest = angular.copy(this.data.request) as IProductionDataApiRequest;
 			apiRequest.recipeCostMultiplier = this.version === '1.2' ? apiRequest.recipeCostMultiplier : 1;
 			apiRequest.powerConsumptionMultiplier = this.version === '1.2' ? apiRequest.powerConsumptionMultiplier : 1;
