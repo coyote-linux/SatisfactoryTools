@@ -37,6 +37,11 @@
 - Reason: The frontend strips planner-only fields such as `powerConsumptionMultiplier` before `/v2/solver` but still uses the full planner-facing request when composing local planner results.
 - Implication: The C# bridge must derive the unchanged stripped solver request for public contract parity, then restore planner-only state only on an internal composition request when building planner-facing results.
 
+### D008 - M3 slice 5 establishes a host-resolved internal calculation seam before any public planner-result contract work
+- Status: Accepted
+- Reason: The migration still needs one internal entrypoint that later runtime planner flows can adopt incrementally without binding those future consumers directly to the lower-level composition bridge.
+- Implication: `InternalPlannerCalculationService` is an acceptable narrow consumer seam for M3 slice 5, but the next slice must wire it into the first real non-test planner-facing runtime flow while keeping `/v2/*` unchanged.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project
