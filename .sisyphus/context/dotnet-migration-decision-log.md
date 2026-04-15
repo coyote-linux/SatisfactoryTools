@@ -72,6 +72,11 @@
 - Reason: The smallest safe follow-on slice after 8b is to put an explicit host-side same-origin gate on `/_internal/planner/calculate` while leaving the guarded planner path default-off and keeping rollback to the existing runtime flag.
 - Implication: The next slice may review guarded default-on rollout behind the hardened internal route, but it should not revisit `/v2/*` contracts or couple rollout with UI cutover work.
 
+### D015 - M3 slice 10 enables guarded planner calculation by default while keeping explicit rollback
+- Status: Accepted
+- Reason: The guarded internal planner route now has the minimum hardening and browser/frontend coverage needed for the repo-side default flip, and the smallest safe slice is to change the injected shell default without widening contracts or route ownership.
+- Implication: The unified host now prefers same-origin `/_internal/planner/calculate` for planner solves, while `Planner:UseInternalCalculate=false` / `USE_INTERNAL_PLANNER_CALCULATE=false` remains the one-flag rollback path back to `/v2/solver`. The next slice should validate deployed proxy/topology behavior rather than widen scope into UI cutover.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project
