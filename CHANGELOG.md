@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Added a host-resolved internal planner calculation seam over the new C# bridge so future server-side planner flows can consume raw solver output plus planner-facing composed results without widening the current `/v2/*` API.
 - Added a host-internal planner runtime route at `/_internal/planner/calculate` so the server can execute planner-state-aware composed calculations through the new internal seam without changing the public `/v2/*` contracts.
 - Added a guarded Angular production-planner caller for `/_internal/planner/calculate` that can consume server-composed planner `details` and `visualization` through host-injected default-off runtime config while leaving `/v2/solver` as the legacy default path.
+- Added committed real-browser regression coverage for the guarded planner path in the .NET test project, locking shared-entry bootstrap, visualization-backed guarded rendering/layout, and guarded no-result debug behavior before any default-on decision.
 
 ### Changed
 - Modernized the frontend build pipeline for current Node versions by replacing legacy webpack loader usage with built-in HTML asset handling and standard module imports.
