@@ -20,6 +20,9 @@ builder.Services.AddSingleton<HostRouteOwnershipPolicy>();
 builder.Services.AddSingleton<SpaShellRenderer>();
 builder.Services.AddSingleton<ProductionPlannerSolver>();
 builder.Services.AddSingleton<PlannerCompatibilityService>();
+builder.Services.AddSingleton<PlannerResultDomainFactory>();
+builder.Services.AddSingleton<PlannerResultCompositionService>();
+builder.Services.AddSingleton<InternalPlannerCalculationService>();
 builder.Services.AddSingleton<ShareStore>();
 
 var app = builder.Build();
