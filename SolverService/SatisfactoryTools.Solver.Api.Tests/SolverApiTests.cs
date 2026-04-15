@@ -185,14 +185,13 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		using var payload = await JsonDocument.ParseAsync(responseStream);
 		var root = payload.RootElement;
 
-		Assert.True(root.TryGetProperty("graph", out var graph));
 		Assert.True(root.TryGetProperty("details", out var details));
 		Assert.True(root.TryGetProperty("visualization", out var visualization));
+		Assert.False(root.TryGetProperty("graph", out _));
+		Assert.False(root.TryGetProperty("debug", out _));
 		Assert.False(root.TryGetProperty("code", out _));
 		Assert.False(root.TryGetProperty("result", out _));
 
-		Assert.True(graph.GetProperty("nodes").GetArrayLength() > 0);
-		Assert.True(graph.GetProperty("edges").GetArrayLength() > 0);
 		Assert.Equal(40d, details.GetProperty("output").GetProperty("Desc_IronPlate_C").GetDouble());
 		Assert.True(visualization.GetProperty("nodes").GetArrayLength() > 0);
 		Assert.True(visualization.GetProperty("edges").GetArrayLength() > 0);
@@ -234,10 +233,23 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		Assert.True(root.TryGetProperty("debug", out var debug));
 		Assert.Contains("feasible solution", debug.GetProperty("message").GetString(), StringComparison.OrdinalIgnoreCase);
 		Assert.False(root.GetProperty("details").GetProperty("hasOutput").GetBoolean());
-		Assert.Empty(root.GetProperty("graph").GetProperty("nodes").EnumerateArray());
-		Assert.Empty(root.GetProperty("graph").GetProperty("edges").EnumerateArray());
+		Assert.False(root.TryGetProperty("graph", out _));
 		Assert.False(root.TryGetProperty("code", out _));
 		Assert.False(root.TryGetProperty("result", out _));
+	}
+
+	[Fact]
+	public async Task InternalPlannerCalculateRouteReturnsGenericValidationErrorPayload()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F003");
+		var plannerState = ClonePlannerState(fixture.PlannerState, recipeCostMultiplier: 0d);
+
+		var response = await client.PostAsJsonAsync("/_internal/planner/calculate?showDebugOutput=true", plannerState);
+
+		Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+		var payload = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+		Assert.NotNull(payload);
+		Assert.Equal("Unable to calculate planner result.", payload!["error"]?.ToString());
 	}
 
 	[Fact]
@@ -581,7 +593,11 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		Assert.InRange(payload.Result["Desc_Water_C#Mine"], 37.499d, 37.501d);
 	}
 
-	private static PlannerState ClonePlannerState(PlannerState state, double? powerConsumptionMultiplier = null)
+	private static PlannerState ClonePlannerState(
+		PlannerState state,
+		double? powerConsumptionMultiplier = null,
+		string? gameVersion = null,
+		double? recipeCostMultiplier = null)
 	{
 		return new PlannerState
 		{
@@ -590,7 +606,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 				Name = state.Metadata.Name,
 				Icon = state.Metadata.Icon,
 				SchemaVersion = state.Metadata.SchemaVersion,
-				GameVersion = state.Metadata.GameVersion,
+				GameVersion = gameVersion ?? state.Metadata.GameVersion,
 			},
 			Request = new PlannerRequest
 			{
@@ -600,7 +616,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 				BlockedRecipes = [.. state.Request.BlockedRecipes],
 				BlockedMachines = [.. state.Request.BlockedMachines],
 				AllowedAlternateRecipes = [.. state.Request.AllowedAlternateRecipes],
-				RecipeCostMultiplier = state.Request.RecipeCostMultiplier,
+				RecipeCostMultiplier = recipeCostMultiplier ?? state.Request.RecipeCostMultiplier,
 				PowerConsumptionMultiplier = powerConsumptionMultiplier ?? state.Request.PowerConsumptionMultiplier,
 				SinkableResources = [.. state.Request.SinkableResources],
 				Production = state.Request.Production.Select((item) => new SolverProductionItem

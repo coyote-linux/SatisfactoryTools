@@ -74,18 +74,20 @@ app.MapPost("/v2/solver", async (HttpRequest request, ProductionPlannerSolver so
 
 app.MapPost("/_internal/planner/calculate", async (HttpRequest request, InternalPlannerCalculationService calculationService, bool? showDebugOutput, CancellationToken cancellationToken) =>
 {
+	var includeDebug = showDebugOutput ?? false;
+
 	try {
 		var payload = await JsonSerializer.DeserializeAsync<PlannerState>(request.Body, SolverJson.Options, cancellationToken);
 		if (payload is null) {
 			return Results.BadRequest(new { error = "Invalid planner payload." });
 		}
 
-		var outcome = calculationService.Calculate(payload, showDebugOutput ?? false);
-		return Results.Json(InternalPlannerCalculationResponse.FromOutcome(outcome), SolverJson.InternalPlannerResponseOptions);
-	} catch (SolverValidationException exception) {
-		return Results.BadRequest(new { error = exception.Message });
-	} catch (JsonException exception) {
-		return Results.BadRequest(new { error = exception.Message });
+		var outcome = calculationService.Calculate(payload, includeDebug);
+		return Results.Json(InternalPlannerCalculationResponse.FromOutcome(outcome, includeDebug), SolverJson.InternalPlannerResponseOptions);
+	} catch (SolverValidationException) {
+		return Results.BadRequest(new { error = "Unable to calculate planner result." });
+	} catch (JsonException) {
+		return Results.BadRequest(new { error = "Invalid planner payload." });
 	}
 });
 

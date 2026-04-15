@@ -62,13 +62,14 @@ public sealed class InternalPlannerCalculationServiceTests : IClassFixture<WebAp
 	{
 		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F001");
 		var outcome = calculationService.Calculate(fixture.PlannerState, fixture.UiState.ShowDebugOutput);
-		var response = InternalPlannerCalculationResponse.FromOutcome(outcome);
+		var response = InternalPlannerCalculationResponse.FromOutcome(outcome, includeDebug: false);
 
 		var json = JsonSerializer.Serialize(response, SolverJson.InternalPlannerResponseOptions);
 
-		Assert.Contains("\"graph\"", json, StringComparison.Ordinal);
 		Assert.Contains("\"details\"", json, StringComparison.Ordinal);
 		Assert.Contains("\"visualization\"", json, StringComparison.Ordinal);
+		Assert.DoesNotContain("\"graph\"", json, StringComparison.Ordinal);
+		Assert.DoesNotContain("\"debug\"", json, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -76,7 +77,7 @@ public sealed class InternalPlannerCalculationServiceTests : IClassFixture<WebAp
 	{
 		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F007");
 		var outcome = calculationService.Calculate(fixture.PlannerState, fixture.UiState.ShowDebugOutput);
-		var response = InternalPlannerCalculationResponse.FromOutcome(outcome);
+		var response = InternalPlannerCalculationResponse.FromOutcome(outcome, includeDebug: true);
 
 		Assert.NotNull(response.Debug);
 		Assert.Contains("feasible solution", response.Debug!.Message, StringComparison.OrdinalIgnoreCase);
