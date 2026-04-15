@@ -178,7 +178,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	{
 		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F001");
 
-		var response = await client.PostAsJsonAsync("/_internal/planner/calculate", fixture.PlannerState);
+		var response = await PostInternalPlannerCalculateAsync(fixture.PlannerState, origin: GetInternalPlannerOrigin());
 		response.EnsureSuccessStatusCode();
 
 		await using var responseStream = await response.Content.ReadAsStreamAsync();
@@ -203,7 +203,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F003");
 		var plannerState = ClonePlannerState(fixture.PlannerState, powerConsumptionMultiplier: 1.2d);
 
-		var response = await client.PostAsJsonAsync("/_internal/planner/calculate", plannerState);
+		var response = await PostInternalPlannerCalculateAsync(plannerState, origin: GetInternalPlannerOrigin());
 		response.EnsureSuccessStatusCode();
 
 		await using var responseStream = await response.Content.ReadAsStreamAsync();
@@ -223,7 +223,7 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	{
 		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F007");
 
-		var response = await client.PostAsJsonAsync("/_internal/planner/calculate?showDebugOutput=true", fixture.PlannerState);
+		var response = await PostInternalPlannerCalculateAsync(fixture.PlannerState, showDebugOutput: true, origin: GetInternalPlannerOrigin());
 		response.EnsureSuccessStatusCode();
 
 		await using var responseStream = await response.Content.ReadAsStreamAsync();
@@ -244,12 +244,38 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F003");
 		var plannerState = ClonePlannerState(fixture.PlannerState, recipeCostMultiplier: 0d);
 
-		var response = await client.PostAsJsonAsync("/_internal/planner/calculate?showDebugOutput=true", plannerState);
+		var response = await PostInternalPlannerCalculateAsync(plannerState, showDebugOutput: true, origin: GetInternalPlannerOrigin());
 
 		Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 		var payload = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
 		Assert.NotNull(payload);
 		Assert.Equal("Unable to calculate planner result.", payload!["error"]?.ToString());
+	}
+
+	[Fact]
+	public async Task InternalPlannerCalculateRouteRejectsRequestsWithoutOriginHeader()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F001");
+
+		var response = await PostInternalPlannerCalculateAsync(fixture.PlannerState);
+
+		Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+		var payload = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+		Assert.NotNull(payload);
+		Assert.Equal(InternalPlannerAccessPolicy.SameOriginError, payload!["error"]?.ToString());
+	}
+
+	[Fact]
+	public async Task InternalPlannerCalculateRouteRejectsCrossOriginRequests()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F001");
+
+		var response = await PostInternalPlannerCalculateAsync(fixture.PlannerState, origin: "https://attacker.example.test");
+
+		Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+		var payload = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+		Assert.NotNull(payload);
+		Assert.Equal(InternalPlannerAccessPolicy.SameOriginError, payload!["error"]?.ToString());
 	}
 
 	[Fact]
@@ -1351,6 +1377,29 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	private static string ExtractShareId(string link)
 	{
 		return link[(link.LastIndexOf('=') + 1)..];
+	}
+
+	private async Task<HttpResponseMessage> PostInternalPlannerCalculateAsync(object plannerState, bool showDebugOutput = false, string? origin = null)
+	{
+		var path = showDebugOutput
+			? "/_internal/planner/calculate?showDebugOutput=true"
+			: "/_internal/planner/calculate";
+
+		using var request = new HttpRequestMessage(HttpMethod.Post, path)
+		{
+			Content = JsonContent.Create(plannerState),
+		};
+
+		if (origin is not null) {
+			request.Headers.TryAddWithoutValidation("Origin", origin);
+		}
+
+		return await client.SendAsync(request);
+	}
+
+	private string GetInternalPlannerOrigin()
+	{
+		return client.BaseAddress?.GetLeftPart(UriPartial.Authority) ?? "http://localhost";
 	}
 
 	private sealed class SolverEnvelope

@@ -17,6 +17,7 @@ builder.Services.AddCors((options) =>
 
 builder.Services.AddSingleton<GameDataCatalog>();
 builder.Services.AddSingleton<HostRouteOwnershipPolicy>();
+builder.Services.AddSingleton<InternalPlannerAccessPolicy>();
 builder.Services.AddSingleton<SpaShellRenderer>();
 builder.Services.AddSingleton<ProductionPlannerSolver>();
 builder.Services.AddSingleton<PlannerCompatibilityService>();
@@ -72,8 +73,12 @@ app.MapPost("/v2/solver", async (HttpRequest request, ProductionPlannerSolver so
 	}
 });
 
-app.MapPost("/_internal/planner/calculate", async (HttpRequest request, InternalPlannerCalculationService calculationService, bool? showDebugOutput, CancellationToken cancellationToken) =>
+app.MapPost("/_internal/planner/calculate", async (HttpRequest request, InternalPlannerAccessPolicy accessPolicy, InternalPlannerCalculationService calculationService, bool? showDebugOutput, CancellationToken cancellationToken) =>
 {
+	if (!accessPolicy.TryAuthorize(request, out var accessError)) {
+		return Results.Json(new { error = accessError }, statusCode: StatusCodes.Status403Forbidden);
+	}
+
 	var includeDebug = showDebugOutput ?? false;
 
 	try {
