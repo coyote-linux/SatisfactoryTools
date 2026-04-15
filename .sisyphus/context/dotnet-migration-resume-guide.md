@@ -17,8 +17,8 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 - Current phase: **M3 in progress**
 - Current milestone: **M3 - Planner Domain Port Complete**
-- Current completed slice: **M3 slice 7 - guarded non-test caller adoption of the internal planner runtime route**
-- Current recommended slice: **M3 slice 8 - tighten the guarded planner boundary and add regression coverage before any default-on or UI-cutover decision**
+- Current completed slice: **M3 slice 8a - guarded planner boundary hardening**
+- Current recommended slice: **M3 slice 8b - add browser/frontend regression coverage before any default-on or UI-cutover decision**
 
 ## Completed Slice
 
@@ -79,10 +79,11 @@ Continue porting planner-side business logic to C# under tests before any produc
 7. Keep the new guarded non-test planner caller stable: the legacy Angular planner can now opt into `/_internal/planner/calculate` through host-injected config, but `Solver.solveProduction()` and `/v2/solver` remain the untouched default compatibility path.
 8. Preserve the local guarded-client boundary: planner-facing `details`/`visualization` adoption should stay isolated to the production-planner path and should not spread internal route semantics across unrelated Angular code.
 9. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
-10. Tighten the planner/result type boundary before any default-on decision so internal planner DTOs do not widen legacy frontend `Graph` expectations.
-11. Harden the guarded share-entry state path for the empty-array storage edge case, not just the null-storage first-load case already fixed in slice 7.
-12. Reduce internal-route exposure and debug-leakage assumptions while keeping `/_internal/planner/calculate` separate from the public `/v2/*` compatibility surface.
-13. Add frontend regression coverage for guarded share activation and visualization layout behavior before widening the guarded path beyond default-off use.
+10. Keep the tightened planner/result type boundary stable: guarded planner results should remain visualization-backed and must not widen legacy frontend `Graph` expectations.
+11. Keep the guarded share-entry hardening stable for both null-storage and empty-array storage cases.
+12. Keep the internal planner hardening stable: no shell-configurable internal planner URL, no `graph` in the internal route response, opt-in debug only, and generic internal validation errors.
+13. Add browser/frontend regression coverage for guarded share activation, visualization layout, and hardened internal-route behavior before widening the guarded path beyond default-off use.
+14. Keep the default-on decision deferred until that browser/frontend coverage is green.
 
 #### Do Not Start Yet
 1. Do not start the Blazor planner UI route during planner-domain porting.
