@@ -19,7 +19,7 @@ Track route-by-route migration from AngularJS ownership to ASP.NET Core ownershi
 | Production planner | AngularJS | `ProductionController.ts`, `ProductionTab.ts`, `templates/Controllers/production.html` | Blazor | M4-M5 | preserve `/{version}/production`, share links, version behavior, planner workflows | Planned |
 | Solver API | ASP.NET Core | `SolverService/.../Program.cs` | ASP.NET Core | M0-M8 | preserve `/v2/solver` contract | Preserved |
 | Share API | ASP.NET Core | `SolverService/.../Program.cs`, `ShareStore.cs` | ASP.NET Core | M0-M8 | preserve `/v2/share` contract and share-link format | Preserved |
-| Internal planner runtime route | ASP.NET Core | `SolverService/.../Program.cs`, `SolverService/.../Services/InternalPlannerCalculationService.cs`, `SolverService/.../Services/HostRouteOwnershipPolicy.cs` | ASP.NET Core | M3 | keep `/_internal/planner/*` API-owned, internal-only, and separate from `/v2/*` compatibility promises | Preserved |
+| Internal planner runtime route | ASP.NET Core | `SolverService/.../Program.cs`, `SolverService/.../Services/InternalPlannerCalculationService.cs`, `SolverService/.../Services/HostRouteOwnershipPolicy.cs` | ASP.NET Core | M3 | keep `/_internal/planner/*` API-owned, behind the same-origin request gate, and separate from `/v2/*` compatibility promises | Preserved |
 
 ## Current Angular State Inventory
 
@@ -65,9 +65,10 @@ Track route-by-route migration from AngularJS ownership to ASP.NET Core ownershi
 7. In M3 slice 7, the legacy Angular production planner gained a default-off guarded caller that can post full planner state to `/_internal/planner/calculate` through host-injected shell config, but `/{version}/production` still remains Angular-owned and `/v2/*` route ownership is unchanged.
 8. In M3 slice 8a, the guarded planner path stopped advertising `internalPlannerCalculateUrl` in shell/runtime config, and the internal route response narrowed to planner-facing `details`/`visualization` with opt-in debug only; route ownership remained unchanged and `/v2/*` compatibility promises stayed separate.
 9. In M3 slice 8b, `PlannerBrowserRegressionTests.cs` added committed real-browser coverage for guarded F004-style share activation, visualization-backed guarded rendering/layout, and F007 no-result debug/internal-route behavior while `/{version}/production` remained Angular-owned, guarded mode stayed default-off, and `/v2/*` ownership stayed unchanged.
+10. In M3 slice 9, `/_internal/planner/calculate` stayed API-owned but gained an explicit same-origin access gate, direct solver tests now lock allowed and rejected origin behavior, and guarded mode still remains default-off while `/{version}/production` and `/v2/*` ownership stay unchanged.
 
 ## Notes
 
 1. This matrix should be updated whenever route ownership changes.
 2. No route should be marked complete until its parity gate is green.
-3. The next planned slice after M2 is `M3 - Planner Domain Port Complete`.
+3. The next planned slice after M3 slice 9 is the guarded default-on rollout review behind the hardened internal route while preserving the default-off rollback path.

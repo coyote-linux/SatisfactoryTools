@@ -17,8 +17,8 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 - Current phase: **M3 in progress**
 - Current milestone: **M3 - Planner Domain Port Complete**
-- Current completed slice: **M3 slice 8b - guarded browser/frontend regression coverage**
-- Current recommended slice: **M3 slice 9 - review guarded default-on readiness and internal-route restriction before any UI-cutover decision**
+- Current completed slice: **M3 slice 9 - internal planner route same-origin hardening**
+- Current recommended slice: **M3 slice 10 - review guarded default-on rollout behind the hardened internal route while preserving config rollback**
 
 ## Completed Slice
 
@@ -83,7 +83,8 @@ Continue porting planner-side business logic to C# under tests before any produc
 11. Keep the guarded share-entry hardening stable for both null-storage and empty-array storage cases.
 12. Keep the internal planner hardening stable: no shell-configurable internal planner URL, no `graph` in the internal route response, opt-in debug only, and generic internal validation errors.
 13. Keep the new browser/frontend regression suite stable: guarded share activation, visualization-backed guarded rendering/layout, and guarded no-result debug/internal-route behavior should remain green in committed tests.
-14. Treat the guarded default-on decision as a separate post-8b gate: coverage is now in place, but widening guarded-path usage still requires an explicit review of `/_internal/planner/calculate` exposure, rollback expectations, and legacy-path coexistence.
+14. Keep the new internal planner access hardening stable: `/_internal/planner/calculate` now requires same-origin requests and remains separate from `/v2/*` compatibility contracts.
+15. Treat guarded default-on as a separate post-9 gate: the internal route is now hardened, but widening guarded-path usage still requires an explicit deployment-topology and rollback review before changing the default.
 
 #### Do Not Start Yet
 1. Do not start the Blazor planner UI route during planner-domain porting.

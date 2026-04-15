@@ -67,6 +67,11 @@
 - Reason: Browser/frontend regression coverage is now committed, but the guarded path is still default-off and `/_internal/planner/calculate` remains a callable same-origin route whose exposure should be reviewed deliberately before widening usage.
 - Implication: The next slice should evaluate rollback, route-access restriction, and whether guarded default-on is acceptable without mixing that decision into Blazor/UI cutover work.
 
+### D014 - M3 slice 9 hardens the internal planner route before any guarded default-on rollout
+- Status: Accepted
+- Reason: The smallest safe follow-on slice after 8b is to put an explicit host-side same-origin gate on `/_internal/planner/calculate` while leaving the guarded planner path default-off and keeping rollback to the existing runtime flag.
+- Implication: The next slice may review guarded default-on rollout behind the hardened internal route, but it should not revisit `/v2/*` contracts or couple rollout with UI cutover work.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project
