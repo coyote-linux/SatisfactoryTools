@@ -26,7 +26,7 @@ public sealed class PlannerBrowserRegressionTests : PageTest, IClassFixture<Brow
 	{
 		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F004");
 		var requestLog = new List<string>();
-		TrackRelevantRequests(requestLog);
+		TrackRelevantRequests(Page, requestLog);
 
 		await Page.AddInitScriptAsync($"() => window.localStorage.setItem({SerializeForJavaScript(fixture.StorageKey)}, '[]');");
 		await Page.GotoAsync(await CreateShareLinkAsync(fixture), new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
@@ -100,7 +100,7 @@ public sealed class PlannerBrowserRegressionTests : PageTest, IClassFixture<Brow
 	{
 		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F007");
 		var requestLog = new List<string>();
-		TrackRelevantRequests(requestLog);
+		TrackRelevantRequests(Page, requestLog);
 
 		await Page.GotoAsync(await CreateShareLinkAsync(fixture), new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
 		await Expect(Page.Locator(".production-line-name-title span")).ToHaveTextAsync("Shared: Fixture F007 - Turbofuel Debug");
@@ -117,9 +117,43 @@ public sealed class PlannerBrowserRegressionTests : PageTest, IClassFixture<Brow
 		Assert.DoesNotContain(requestLog, (entry) => entry.StartsWith("POST /v2/solver", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public async Task ExplicitFalseRollbackUsesLegacySolverRouteInsteadOfInternalPlannerRoute()
+	{
+		using var rollbackFactory = BrowserRegressionWebApplicationFactory.Create(useInternalPlannerCalculate: false);
+		await using var rollbackContext = await Browser.NewContextAsync(new BrowserNewContextOptions
+		{
+			BaseURL = rollbackFactory.ServerAddress.ToString(),
+		});
+		var rollbackPage = await rollbackContext.NewPageAsync();
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F004");
+		var requestLog = new List<string>();
+		TrackRelevantRequests(rollbackPage, requestLog);
+
+		var solverResponse = rollbackPage.WaitForResponseAsync((response) =>
+		{
+			var uri = new Uri(response.Url);
+			return response.Request.Method == "POST"
+				&& uri.AbsolutePath == "/v2/solver";
+		});
+
+		await rollbackPage.GotoAsync(await CreateShareLinkAsync(rollbackFactory, fixture), new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+		await solverResponse;
+
+		await Expect(rollbackPage.Locator(".production-line-name-title span")).ToHaveTextAsync("Shared: Shared Motor Plan");
+		Assert.Contains(requestLog, (entry) => entry.StartsWith("GET /v2/share/", StringComparison.Ordinal));
+		Assert.Contains(requestLog, (entry) => entry.StartsWith("POST /v2/solver", StringComparison.Ordinal));
+		Assert.DoesNotContain(requestLog, (entry) => entry.StartsWith("POST /_internal/planner/calculate", StringComparison.Ordinal));
+	}
+
 	private async Task<string> CreateShareLinkAsync(PlannerFixtureSupport.PlannerFixture fixture)
 	{
-		using var client = factory.CreateClient();
+		return await CreateShareLinkAsync(factory, fixture);
+	}
+
+	private static async Task<string> CreateShareLinkAsync(BrowserRegressionWebApplicationFactory targetFactory, PlannerFixtureSupport.PlannerFixture fixture)
+	{
+		using var client = targetFactory.CreateClient();
 		var response = await client.PostAsJsonAsync(
 			"/v2/share/?version=" + Uri.EscapeDataString(fixture.RouteVersion),
 			fixture.PlannerState);
@@ -129,9 +163,9 @@ public sealed class PlannerBrowserRegressionTests : PageTest, IClassFixture<Brow
 		return payload?.Link ?? throw new InvalidOperationException($"Share creation for fixture '{fixture.Id}' did not return a link.");
 	}
 
-	private void TrackRelevantRequests(List<string> requestLog)
+	private static void TrackRelevantRequests(IPage page, List<string> requestLog)
 	{
-		Page.Request += (_, request) =>
+		page.Request += (_, request) =>
 		{
 			var uri = new Uri(request.Url);
 			if (!uri.AbsolutePath.StartsWith("/_internal/", StringComparison.Ordinal)

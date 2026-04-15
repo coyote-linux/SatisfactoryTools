@@ -14,6 +14,16 @@ public sealed class BrowserRegressionWebApplicationFactory : IDisposable
 	private bool disposed;
 
 	public BrowserRegressionWebApplicationFactory()
+		: this(null)
+	{
+	}
+
+	public static BrowserRegressionWebApplicationFactory Create(bool? useInternalPlannerCalculate)
+	{
+		return new BrowserRegressionWebApplicationFactory(useInternalPlannerCalculate);
+	}
+
+	private BrowserRegressionWebApplicationFactory(bool? useInternalPlannerCalculate)
 	{
 		var frontendRoot = ResolveRepositoryFrontendRoot();
 		var repositoryRoot = Directory.GetParent(frontendRoot)?.FullName ?? throw new InvalidOperationException($"Unable to resolve the repository root from frontend path '{frontendRoot}'.");
@@ -21,7 +31,7 @@ public sealed class BrowserRegressionWebApplicationFactory : IDisposable
 		Directory.CreateDirectory(shareRoot);
 
 		var serverAddressSource = new TaskCompletionSource<Uri>(TaskCreationOptions.RunContinuationsAsynchronously);
-		hostProcess = StartHostProcess(repositoryRoot, frontendRoot, shareRoot, serverAddressSource);
+		hostProcess = StartHostProcess(repositoryRoot, frontendRoot, shareRoot, useInternalPlannerCalculate, serverAddressSource);
 		ServerAddress = WaitForServerAddress(serverAddressSource.Task);
 	}
 
@@ -53,7 +63,7 @@ public sealed class BrowserRegressionWebApplicationFactory : IDisposable
 		}
 	}
 
-	private Process StartHostProcess(string repositoryRoot, string frontendRoot, string shareRoot, TaskCompletionSource<Uri> serverAddressSource)
+	private Process StartHostProcess(string repositoryRoot, string frontendRoot, string shareRoot, bool? useInternalPlannerCalculate, TaskCompletionSource<Uri> serverAddressSource)
 	{
 		var appDllPath = Path.Combine(AppContext.BaseDirectory, "SatisfactoryTools.Solver.Api.dll");
 		if (!File.Exists(appDllPath)) {
@@ -76,7 +86,13 @@ public sealed class BrowserRegressionWebApplicationFactory : IDisposable
 
 		process.StartInfo.Environment["Frontend__Root"] = frontendRoot;
 		process.StartInfo.Environment["ShareStore__Root"] = shareRoot;
-		process.StartInfo.Environment["Planner__UseInternalCalculate"] = "true";
+		process.StartInfo.Environment.Remove("SOLVER_URL");
+		process.StartInfo.Environment.Remove("Planner__UseInternalCalculate");
+		process.StartInfo.Environment.Remove("Planner:UseInternalCalculate");
+		if (useInternalPlannerCalculate.HasValue) {
+			process.StartInfo.Environment["Planner__UseInternalCalculate"] = useInternalPlannerCalculate.Value ? "true" : "false";
+		}
+
 		process.StartInfo.Environment["ASPNETCORE_CONTENTROOT"] = repositoryRoot;
 
 		process.OutputDataReceived += (_, args) => HandleHostOutput(args.Data, serverAddressSource);

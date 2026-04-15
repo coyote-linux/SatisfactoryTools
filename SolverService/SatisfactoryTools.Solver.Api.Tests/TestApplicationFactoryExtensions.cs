@@ -33,6 +33,8 @@ internal static class TestApplicationFactoryExtensions
 		var settings = new Dictionary<string, string?>
 		{
 			["Frontend:Root"] = frontendRoot,
+			["SOLVER_URL"] = null,
+			["Planner:UseInternalCalculate"] = null,
 		};
 
 		if (solverUrl is not null) {
