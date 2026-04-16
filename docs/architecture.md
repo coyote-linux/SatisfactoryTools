@@ -122,7 +122,7 @@ These scripts are content-maintenance tools, not part of the minimum runtime nee
 - The host preserves `www/index.php` runtime config injection semantics, including the `SOLVER_URL` override and the default same-origin `/v2/*` model.
 - The guarded planner path now defaults to same-origin `/_internal/planner/calculate`; explicit rollback remains available through `Planner:UseInternalCalculate=false` on the ASP.NET host or `USE_INTERNAL_PLANNER_CALCULATE=false` if the raw PHP shell template is still rendered directly.
 
-For deployments behind a reverse proxy or TLS terminator, the ASP.NET host must receive the public scheme and host values for planner requests. The internal planner access policy compares the browser `Origin` header against `request.Scheme` plus `request.Host`, so mismatched forwarded values will cause same-origin planner requests to fail.
+For deployments behind a reverse proxy or TLS terminator, the ASP.NET host now consumes forwarded public scheme and host values before enforcing the guarded planner same-origin check. The internal planner access policy still compares the browser `Origin` header against `request.Scheme` plus `request.Host`, so the reverse proxy must overwrite or sanitize `X-Forwarded-Proto` and `X-Forwarded-Host`, only intended public hostnames should be allowed through to ASP.NET, trusted proxy allow-lists remain deployment-owned, and one real public-origin smoke is still required before treating the default-on guarded path as green.
 
 In local development, the recommended path is to let the ASP.NET host serve both the shell and the compatibility endpoints.
 
