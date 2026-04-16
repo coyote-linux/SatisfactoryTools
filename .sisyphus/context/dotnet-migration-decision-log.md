@@ -80,7 +80,12 @@
 ### D016 - M3 slice 11 keeps the same-origin gate and fixes public-host topology in host middleware
 - Status: Accepted
 - Reason: The smallest safe follow-on after slice 10 is to normalize forwarded public scheme/host in `Program.cs` before `InternalPlannerAccessPolicy` runs, rather than moving reverse-proxy concerns into the policy or changing `/v2/*` behavior.
-- Implication: Deployment must overwrite or sanitize `X-Forwarded-Proto` and `X-Forwarded-Host`, restrict accepted public hostnames, and record one real public-origin smoke before M3 slice 11 is treated as complete.
+- Implication: Deployment must overwrite or sanitize `X-Forwarded-Proto` and `X-Forwarded-Host`, restrict accepted public hostnames, and record one real public-origin smoke before M3 slice 11 is treated as complete. That smoke has now been recorded on `https://ficsit.spugnort.com/`, so the next slice should move into M4 beta-route planning.
+
+### D017 - M4 slice 1 establishes a host-owned `/beta/production` seam before any planner beta UI work
+- Status: Accepted
+- Reason: The smallest safe first M4 step is to reserve `/beta/*` away from legacy shell fallback and expose a placeholder-only beta route behind a new host-only flag, rather than touching Angular route ownership or starting planner UI parity work immediately.
+- Implication: `/{version}/production` remains Angular-owned, `Planner:BetaRouteEnabled` is the new rollback lever for the beta seam, and the next slice should replace the placeholder behind `/beta/production` with the first isolated beta planner shell or layout.
 
 ## Open Decisions
 
@@ -90,7 +95,7 @@
 
 ### O002 - Final Blazor hosting mode for planner
 - Options: Blazor Web App with interactive client-side execution, or another Blazor-hosting shape.
-- Decision needed by: before M4 implementation begins.
+- Decision needed by: before the first interactive or stateful beta planner shell goes beyond the current placeholder seam.
 
 ### O003 - Graph rendering strategy in Blazor
 - Options: retain current JS graph libraries with interop, or replace later.

@@ -15,11 +15,10 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 
 ## Current Status
 
-- Current phase: **M3 in progress**
-- Current milestone: **M3 - Planner Domain Port Complete**
-- Current completed slice: **M3 slice 10 - guarded internal planner default-on rollout with explicit rollback**
-- Current active slice: **M3 slice 11 - forwarded public-host normalization for guarded planner authorization (local implementation landed, external smoke pending)**
-- Current recommended next action: **Run real public-origin default-on and rollback smoke in deployment, then record M3 slice 11 as complete**
+- Current phase: **M4 in progress**
+- Current milestone: **M4 - Blazor Planner Beta**
+- Current completed slice: **M4 slice 1 - host-owned beta route seam**
+- Current recommended slice: **M4 slice 2 - first isolated beta planner shell or layout behind `/beta/production` while `/{version}/production` stays Angular-owned**
 
 ## Completed Slice
 
@@ -65,33 +64,22 @@ Captured file-backed planner parity fixtures F001-F008 inside the existing solve
 
 ## Immediate Next Slice
 
-### M3
+### M4
 
 #### Objective
-Continue porting planner-side business logic to C# under tests before any production-planner UI cutover.
+Replace the M4 slice 1 placeholder behind `/beta/production` with the first isolated beta planner shell or layout without cutting over the existing Angular production-planner route.
 
 #### Expected Work
-1. Keep the planner compatibility/request-shaping layer stable and reusable.
-2. Keep the C# result-domain and result-visualization layers stable: raw-result parsing, graph generation, result aggregations, visual node/edge shaping, recipe labels/tooltips, and ELK payload construction are now covered by direct tests plus targeted fixture parity.
-3. Keep the new internal planner result composition bridge stable: it must continue deriving the canonical stripped solver request while composing planner-facing results from normalized planner state plus raw solver output.
-4. Keep the host-resolved internal calculation seam stable as the preferred entrypoint for future server-side planner consumers.
-5. Keep the new host-internal runtime route stable as the first real runtime adopter of that seam, and preserve its separation from `/v2/*` compatibility contracts.
-6. Preserve the planner-only `powerConsumptionMultiplier` input in that bridge, because `/v2/solver` request DTOs still do not carry the full planner-facing state used by current TypeScript result rendering.
-7. Keep the new guarded non-test planner caller stable: the legacy Angular planner now defaults to `/_internal/planner/calculate` through host-injected config, but explicit false rollback and the legacy `Solver.solveProduction()` + `/v2/solver` compatibility path both remain intact.
-8. Preserve the local guarded-client boundary: planner-facing `details`/`visualization` adoption should stay isolated to the production-planner path and should not spread internal route semantics across unrelated Angular code.
-9. Keep route ownership and `/v2/*` contracts unchanged while planner-domain parity work lands.
-10. Keep the tightened planner/result type boundary stable: guarded planner results should remain visualization-backed and must not widen legacy frontend `Graph` expectations.
-11. Keep the guarded share-entry hardening stable for both null-storage and empty-array storage cases.
-12. Keep the internal planner hardening stable: no shell-configurable internal planner URL, no `graph` in the internal route response, opt-in debug only, and generic internal validation errors.
-13. Keep the new browser/frontend regression suite stable: guarded share activation, visualization-backed guarded rendering/layout, and guarded no-result debug/internal-route behavior should remain green in committed tests.
-14. Keep the new internal planner access hardening stable: `/_internal/planner/calculate` now requires same-origin requests and remains separate from `/v2/*` compatibility contracts.
-15. Keep the new forwarded public-host normalization stable: the host now consumes forwarded public scheme/host before guarded same-origin enforcement, while mismatch rejection and explicit rollback must remain intact.
-16. Do not mark M3 slice 11 complete until the deployed public-origin guarded-path smoke and rollback confirmation are both recorded.
+1. Keep `/beta/*` host-owned and preserve the new `Planner:BetaRouteEnabled` rollback lever.
+2. Replace the placeholder content at `/beta/production` with the first real isolated beta planner shell or layout.
+3. Keep `/{version}/production` Angular-owned while the beta shell lands.
+4. Preserve `/v2/*` compatibility endpoints and the guarded planner runtime path during the beta-shell work.
+5. Record any explicit parity gaps rather than silently widening the slice.
 
 #### Do Not Start Yet
-1. Do not start the Blazor planner UI route during planner-domain porting.
-2. Do not change route shapes or `/v2/*` contracts while porting planner logic.
-3. Do not mix deployment or remaining content-route migration into M3.
+1. Do not cut over `/{version}/production` during M4 slice 2.
+2. Do not remove the guarded internal planner path or its rollback behavior.
+3. Do not mix fan-site feature expansion into the first isolated beta shell.
 
 ## Key Repo Truths To Preserve
 
@@ -101,7 +89,8 @@ Continue porting planner-side business logic to C# under tests before any produc
 4. Current deep-link fallback owner: `SolverService/SatisfactoryTools.Solver.Api/Program.cs`
 5. Current frontend build output: `www/assets/app.js`
 6. Existing compatibility endpoints: `SolverService/SatisfactoryTools.Solver.Api/Program.cs`
-7. Planner-heavy client logic lives in `ProductionController.ts`, `ProductionTab.ts`, `ProductionResultFactory.ts`, `Graph.ts`, `ProductionResult.ts`, and related node classes.
+7. Beta seam owner: `SolverService/SatisfactoryTools.Solver.Api/Services/HostRouteOwnershipPolicy.cs`
+8. Planner-heavy client logic still lives in `ProductionController.ts`, `ProductionTab.ts`, `ProductionResultFactory.ts`, `Graph.ts`, `ProductionResult.ts`, and related node classes.
 
 ## Commands Worth Remembering
 

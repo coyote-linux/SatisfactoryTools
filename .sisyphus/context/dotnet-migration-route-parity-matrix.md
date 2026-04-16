@@ -67,10 +67,11 @@ Track route-by-route migration from AngularJS ownership to ASP.NET Core ownershi
 9. In M3 slice 8b, `PlannerBrowserRegressionTests.cs` added committed real-browser coverage for guarded F004-style share activation, visualization-backed guarded rendering/layout, and F007 no-result debug/internal-route behavior while `/{version}/production` remained Angular-owned, guarded mode stayed default-off, and `/v2/*` ownership stayed unchanged.
 10. In M3 slice 9, `/_internal/planner/calculate` stayed API-owned but gained an explicit same-origin access gate, direct solver tests now lock allowed and rejected origin behavior, and guarded mode still remains default-off while `/{version}/production` and `/v2/*` ownership stay unchanged.
 11. In M3 slice 10, the unified shell flipped guarded planner calculation to default-on, browser regressions now exercise that default without test-only opt-in config, and explicit false rollback still sends planner solves through `/v2/solver` while `/{version}/production` and `/v2/*` ownership stay unchanged.
-12. In M3 slice 11 local implementation, the host began consuming forwarded public scheme/host before `/_internal/planner/calculate` authorization, direct solver tests now lock forwarded-origin allow/deny behavior, and host-routing tests lock rollback shell behavior under forwarded public authority while `/{version}/production` and `/v2/*` ownership stay unchanged.
+12. In M3 slice 11, the host began consuming forwarded public scheme/host before `/_internal/planner/calculate` authorization, the deployed fork at `https://ficsit.spugnort.com/` now proxies `/v2/*` and `/_internal/planner/*` to the ASP.NET host, real public-origin smoke proved default-on guarded solves hit `POST /_internal/planner/calculate`, and real rollback smoke proved the raw shell can still send planner solves back through `POST /v2/solver` while `/{version}/production` and `/v2/*` ownership stay unchanged.
+13. In M4 slice 1, the host reserved `/beta/*` away from legacy shell fallback, added a new off-by-default `GET /beta/production` Blazor placeholder seam behind `Planner:BetaRouteEnabled`, and kept `/{version}/production`, `/v2/*`, and `/_internal/planner/*` ownership unchanged.
 
 ## Notes
 
 1. This matrix should be updated whenever route ownership changes.
 2. No route should be marked complete until its parity gate is green.
-3. The current parity gate is still M3 slice 11: do not mark it complete until proxy/public-origin smoke and rollback confirmation are recorded against a real deployed host.
+3. The M3 parity gate is green through slice 11, and M4 slice 1 has established the first beta route seam. The next route-parity work should expand `/beta/production` without cutting over `/{version}/production`.
