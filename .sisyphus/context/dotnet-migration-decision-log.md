@@ -77,6 +77,11 @@
 - Reason: The guarded internal planner route now has the minimum hardening and browser/frontend coverage needed for the repo-side default flip, and the smallest safe slice is to change the injected shell default without widening contracts or route ownership.
 - Implication: The unified host now prefers same-origin `/_internal/planner/calculate` for planner solves, while `Planner:UseInternalCalculate=false` / `USE_INTERNAL_PLANNER_CALCULATE=false` remains the one-flag rollback path back to `/v2/solver`. The next slice should validate deployed proxy/topology behavior rather than widen scope into UI cutover.
 
+### D016 - M3 slice 11 keeps the same-origin gate and fixes public-host topology in host middleware
+- Status: Accepted
+- Reason: The smallest safe follow-on after slice 10 is to normalize forwarded public scheme/host in `Program.cs` before `InternalPlannerAccessPolicy` runs, rather than moving reverse-proxy concerns into the policy or changing `/v2/*` behavior.
+- Implication: Deployment must overwrite or sanitize `X-Forwarded-Proto` and `X-Forwarded-Host`, restrict accepted public hostnames, and record one real public-origin smoke before M3 slice 11 is treated as complete.
+
 ## Open Decisions
 
 ### O001 - Extend existing ASP.NET Core host project or create a new unified host project
