@@ -52,6 +52,27 @@ public sealed class HostRoutingIntegrationTests : IClassFixture<WebApplicationFa
 		Assert.DoesNotContain("internalPlannerCalculateUrl", html, StringComparison.Ordinal);
 	}
 
+	[Fact]
+	public async Task DeepLinksPreserveExplicitRollbackOverrideBehindForwardedPublicOrigin()
+	{
+		using var frontendSite = FrontendTestSite.Create();
+		using var frontendClient = factory.CreateFrontendClient(
+			frontendSite.RootPath,
+			useInternalPlannerCalculate: false);
+
+		using var request = new HttpRequestMessage(HttpMethod.Get, "/1.2/production?share=abc123");
+		request.Headers.TryAddWithoutValidation("X-Forwarded-Proto", "https");
+		request.Headers.TryAddWithoutValidation("X-Forwarded-Host", "planner.example.test");
+
+		var response = await frontendClient.SendAsync(request);
+		response.EnsureSuccessStatusCode();
+
+		var html = await response.Content.ReadAsStringAsync();
+		Assert.Contains("<app></app>", html, StringComparison.Ordinal);
+		Assert.Contains("useInternalPlannerCalculate: false", html, StringComparison.Ordinal);
+		Assert.DoesNotContain("internalPlannerCalculateUrl", html, StringComparison.Ordinal);
+	}
+
 	[Theory]
 	[InlineData("/1.0")]
 	[InlineData("/1.0-ficsmas")]

@@ -279,6 +279,52 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 	}
 
 	[Fact]
+	public async Task InternalPlannerCalculateRouteAllowsMatchingForwardedPublicOrigin()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F001");
+		var headers = new Dictionary<string, string>
+		{
+			["X-Forwarded-Proto"] = "https",
+			["X-Forwarded-Host"] = "planner.example.test",
+		};
+
+		var response = await PostInternalPlannerCalculateAsync(
+			fixture.PlannerState,
+			origin: "https://planner.example.test",
+			additionalHeaders: headers);
+
+		response.EnsureSuccessStatusCode();
+
+		await using var responseStream = await response.Content.ReadAsStreamAsync();
+		using var payload = await JsonDocument.ParseAsync(responseStream);
+		var root = payload.RootElement;
+
+		Assert.True(root.TryGetProperty("details", out _));
+		Assert.True(root.TryGetProperty("visualization", out _));
+	}
+
+	[Fact]
+	public async Task InternalPlannerCalculateRouteRejectsMismatchedForwardedPublicOrigin()
+	{
+		var fixture = PlannerFixtureSupport.LoadPlannerFixture("F001");
+		var headers = new Dictionary<string, string>
+		{
+			["X-Forwarded-Proto"] = "https",
+			["X-Forwarded-Host"] = "planner.example.test",
+		};
+
+		var response = await PostInternalPlannerCalculateAsync(
+			fixture.PlannerState,
+			origin: "https://attacker.example.test",
+			additionalHeaders: headers);
+
+		Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+		var payload = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+		Assert.NotNull(payload);
+		Assert.Equal(InternalPlannerAccessPolicy.SameOriginError, payload!["error"]?.ToString());
+	}
+
+	[Fact]
 	public async Task MissingGameVersionReturnsCompatibilityError()
 	{
 		var response = await client.PostAsJsonAsync("/v2/solver", new
@@ -1379,7 +1425,12 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 		return link[(link.LastIndexOf('=') + 1)..];
 	}
 
-	private async Task<HttpResponseMessage> PostInternalPlannerCalculateAsync(object plannerState, bool showDebugOutput = false, string? origin = null)
+	private async Task<HttpResponseMessage> PostInternalPlannerCalculateAsync(
+		object plannerState,
+		bool showDebugOutput = false,
+		string? origin = null,
+		HttpClient? requestClient = null,
+		IReadOnlyDictionary<string, string>? additionalHeaders = null)
 	{
 		var path = showDebugOutput
 			? "/_internal/planner/calculate?showDebugOutput=true"
@@ -1394,7 +1445,13 @@ public class SolverApiTests : IClassFixture<WebApplicationFactory<Program>>
 			request.Headers.TryAddWithoutValidation("Origin", origin);
 		}
 
-		return await client.SendAsync(request);
+		if (additionalHeaders is not null) {
+			foreach (var header in additionalHeaders) {
+				request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+			}
+		}
+
+		return await (requestClient ?? client).SendAsync(request);
 	}
 
 	private string GetInternalPlannerOrigin()

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using SatisfactoryTools.Solver.Api.Contracts;
@@ -13,6 +14,11 @@ builder.Services.AddCors((options) =>
 	{
 		policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
 	});
+});
+
+builder.Services.Configure<ForwardedHeadersOptions>((options) =>
+{
+	options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
 });
 
 builder.Services.AddSingleton<GameDataCatalog>();
@@ -30,6 +36,7 @@ var app = builder.Build();
 var hostRouteOwnershipPolicy = app.Services.GetRequiredService<HostRouteOwnershipPolicy>();
 var shellRenderer = app.Services.GetRequiredService<SpaShellRenderer>();
 
+app.UseForwardedHeaders();
 app.UseCors();
 app.UseStaticFiles(new StaticFileOptions
 {
