@@ -109,6 +109,7 @@ These scripts are content-maintenance tools, not part of the minimum runtime nee
 - The document root must be `www/`.
 - The application expects to be served from the site root because `www/index.php` sets `<base href="/">` and uses absolute `/assets/...` URLs.
 - Unknown non-file routes must fall back to the rendered shell HTML while `/v2/*` keeps API ownership.
+- `/beta/*` is now reserved for host-owned beta work: the M4 slice-1 seam exposes only `/beta/production` behind `Planner:BetaRouteEnabled` / `Planner__BetaRouteEnabled`, returns `404` when that flag is off, and never falls back to the Angular shell for unknown `/beta/*` paths.
 - Static assets under `www/assets/` must be served directly.
 
 ### Current verified environment
@@ -121,6 +122,7 @@ These scripts are content-maintenance tools, not part of the minimum runtime nee
 - Public deployments should expose same-origin `/v2/solver` and `/v2/share/...` directly from the ASP.NET host.
 - The host preserves `www/index.php` runtime config injection semantics, including the `SOLVER_URL` override and the default same-origin `/v2/*` model.
 - The guarded planner path now defaults to same-origin `/_internal/planner/calculate`; explicit rollback remains available through `Planner:UseInternalCalculate=false` on the ASP.NET host or `USE_INTERNAL_PLANNER_CALCULATE=false` if the raw PHP shell template is still rendered directly.
+- `/{version}/production` remains Angular-shell owned in M4 slice 1; the new Blazor beta seam is isolated to `/beta/production` and does not add beta flags to `window.SATISFACTORY_TOOLS_CONFIG`.
 
 For deployments behind a reverse proxy or TLS terminator, the ASP.NET host now consumes forwarded public scheme and host values before enforcing the guarded planner same-origin check. The internal planner access policy still compares the browser `Origin` header against `request.Scheme` plus `request.Host`, so the reverse proxy must overwrite or sanitize `X-Forwarded-Proto` and `X-Forwarded-Host`, only intended public hostnames should be allowed through to ASP.NET, trusted proxy allow-lists remain deployment-owned, and one real public-origin smoke is still required before treating the default-on guarded path as green.
 

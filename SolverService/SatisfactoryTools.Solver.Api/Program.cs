@@ -1,9 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using SatisfactoryTools.Solver.Api.Contracts;
+using SatisfactoryTools.Solver.Api.Components;
 using SatisfactoryTools.Solver.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +22,8 @@ builder.Services.Configure<ForwardedHeadersOptions>((options) =>
 {
 	options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
 });
+
+builder.Services.AddRazorComponents();
 
 builder.Services.AddSingleton<GameDataCatalog>();
 builder.Services.AddSingleton<HostRouteOwnershipPolicy>();
@@ -62,6 +66,11 @@ app.Use(async (HttpContext context, Func<Task> next) =>
 });
 
 app.MapGet("/v2/", () => Results.Json(new {code = 200, active = true}));
+
+app.MapGet("/beta/production", Results<NotFound, RazorComponentResult<BetaProductionPlaceholder>> (IConfiguration configuration) =>
+	configuration.GetValue("Planner:BetaRouteEnabled", false)
+		? new RazorComponentResult<BetaProductionPlaceholder>()
+		: TypedResults.NotFound());
 
 app.MapPost("/v2/solver", async (HttpRequest request, ProductionPlannerSolver solver, CancellationToken cancellationToken) =>
 {

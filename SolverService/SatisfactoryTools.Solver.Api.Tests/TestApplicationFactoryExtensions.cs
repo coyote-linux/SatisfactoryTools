@@ -28,13 +28,15 @@ internal static class TestApplicationFactoryExtensions
 		this WebApplicationFactory<Program> factory,
 		string frontendRoot,
 		string? solverUrl = null,
-		bool? useInternalPlannerCalculate = null)
+		bool? useInternalPlannerCalculate = null,
+		bool? betaRouteEnabled = null)
 	{
 		var settings = new Dictionary<string, string?>
 		{
 			["Frontend:Root"] = frontendRoot,
 			["SOLVER_URL"] = null,
 			["Planner:UseInternalCalculate"] = null,
+			["Planner:BetaRouteEnabled"] = null,
 		};
 
 		if (solverUrl is not null) {
@@ -43,6 +45,10 @@ internal static class TestApplicationFactoryExtensions
 
 		if (useInternalPlannerCalculate.HasValue) {
 			settings["Planner:UseInternalCalculate"] = useInternalPlannerCalculate.Value ? "true" : "false";
+		}
+
+		if (betaRouteEnabled.HasValue) {
+			settings["Planner:BetaRouteEnabled"] = betaRouteEnabled.Value ? "true" : "false";
 		}
 
 		return factory.CreateConfiguredClient(settings);

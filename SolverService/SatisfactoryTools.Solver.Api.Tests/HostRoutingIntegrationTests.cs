@@ -146,6 +146,50 @@ public sealed class HostRoutingIntegrationTests : IClassFixture<WebApplicationFa
 	}
 
 	[Fact]
+	public async Task BetaProductionReturnsNotFoundWhenBetaRouteIsDisabled()
+	{
+		using var frontendSite = FrontendTestSite.Create();
+		using var frontendClient = factory.CreateFrontendClient(frontendSite.RootPath, betaRouteEnabled: false);
+
+		var response = await frontendClient.GetAsync("/beta/production");
+		Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+		var body = await response.Content.ReadAsStringAsync();
+		Assert.DoesNotContain("<!DOCTYPE html>", body, StringComparison.Ordinal);
+		Assert.DoesNotContain("SATISFACTORY_TOOLS_CONFIG", body, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public async Task BetaProductionReturnsPlaceholderWhenBetaRouteIsEnabled()
+	{
+		using var frontendSite = FrontendTestSite.Create();
+		using var frontendClient = factory.CreateFrontendClient(frontendSite.RootPath, betaRouteEnabled: true);
+
+		var response = await frontendClient.GetAsync("/beta/production");
+		response.EnsureSuccessStatusCode();
+		Assert.Equal("text/html; charset=utf-8", response.Content.Headers.ContentType?.ToString());
+
+		var html = await response.Content.ReadAsStringAsync();
+		Assert.Contains("beta-production-placeholder", html, StringComparison.Ordinal);
+		Assert.Contains("Blazor beta planner placeholder", html, StringComparison.Ordinal);
+		Assert.DoesNotContain("window.SATISFACTORY_TOOLS_CONFIG", html, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public async Task UnknownBetaRouteDoesNotFallBackToShellHtml()
+	{
+		using var frontendSite = FrontendTestSite.Create();
+		using var frontendClient = factory.CreateFrontendClient(frontendSite.RootPath, betaRouteEnabled: true);
+
+		var response = await frontendClient.GetAsync("/beta/not-a-route");
+		Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+		var body = await response.Content.ReadAsStringAsync();
+		Assert.DoesNotContain("<!DOCTYPE html>", body, StringComparison.Ordinal);
+		Assert.DoesNotContain("SATISFACTORY_TOOLS_CONFIG", body, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public async Task MissingAssetPathDoesNotFallBackToShellHtml()
 	{
 		using var frontendSite = FrontendTestSite.Create();

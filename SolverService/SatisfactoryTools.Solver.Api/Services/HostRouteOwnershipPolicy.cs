@@ -3,6 +3,7 @@ namespace SatisfactoryTools.Solver.Api.Services;
 public enum HostRouteOwner
 {
 	Api,
+	Host,
 	LegacyShell,
 	StaticFileOrUnhandled,
 }
@@ -22,6 +23,10 @@ public sealed class HostRouteOwnershipPolicy
 		if (requestPath.StartsWithSegments("/v2", StringComparison.OrdinalIgnoreCase)
 			|| requestPath.StartsWithSegments("/_internal/planner", StringComparison.OrdinalIgnoreCase)) {
 			return HostRouteOwner.Api;
+		}
+
+		if (requestPath.StartsWithSegments("/beta", StringComparison.OrdinalIgnoreCase)) {
+			return HostRouteOwner.Host;
 		}
 
 		if (!HttpMethods.IsGet(requestMethod) && !HttpMethods.IsHead(requestMethod)) {

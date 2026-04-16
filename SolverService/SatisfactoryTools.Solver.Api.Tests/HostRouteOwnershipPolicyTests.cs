@@ -14,6 +14,8 @@ public sealed class HostRouteOwnershipPolicyTests
 	[InlineData("GET", "/v2/share/abc123", HostRouteOwner.Api)]
 	[InlineData("POST", "/_internal/planner/calculate", HostRouteOwner.Api)]
 	[InlineData("GET", "/_internal/planner/not-a-route", HostRouteOwner.Api)]
+	[InlineData("GET", "/beta/production", HostRouteOwner.Host)]
+	[InlineData("GET", "/beta/not-a-route", HostRouteOwner.Host)]
 	[InlineData("GET", "/", HostRouteOwner.LegacyShell)]
 	[InlineData("HEAD", "/1.2/production", HostRouteOwner.LegacyShell)]
 	[InlineData("GET", "/1.0", HostRouteOwner.LegacyShell)]
@@ -54,5 +56,16 @@ public sealed class HostRouteOwnershipPolicyTests
 
 		Assert.Equal(Policy.GetOwner(HttpMethods.Get, new PathString("/1.2/production")), Policy.GetOwner(context.Request));
 		Assert.True(Policy.IsLegacyShellFallbackEligible(context.Request));
+	}
+
+	[Fact]
+	public void BetaRoutesAreNeverLegacyShellFallbackEligible()
+	{
+		var context = new DefaultHttpContext();
+		context.Request.Method = HttpMethods.Get;
+		context.Request.Path = "/beta/not-a-route";
+
+		Assert.Equal(HostRouteOwner.Host, Policy.GetOwner(context.Request));
+		Assert.False(Policy.IsLegacyShellFallbackEligible(context.Request));
 	}
 }
