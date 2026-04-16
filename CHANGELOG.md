@@ -47,6 +47,7 @@ All notable changes to this project will be documented in this file.
 - Updated the unified shell so guarded planner calculation now defaults to the hardened same-origin internal route while preserving explicit config and environment rollback to the legacy `/v2/solver` path.
 - Updated Docker Compose and the test helpers so local unified-host workflows and default-path regressions now inherit the guarded planner default-on behavior unless an explicit rollback override is supplied.
 - Updated the ASP.NET host to honor forwarded public scheme/host values before guarded planner same-origin enforcement, with targeted topology tests that keep forwarded mismatch rejection and rollback behavior intact.
+- Added a host-owned `/beta/production` Blazor placeholder seam behind `Planner:BetaRouteEnabled`, while keeping `/{version}/production` Angular-owned and reserving `/beta/*` away from legacy shell fallback.
 
 ### Removed
 - Removed `script-loader` and `angular-templatecache-loader` from the build dependency chain.
