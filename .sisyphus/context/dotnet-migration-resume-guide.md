@@ -18,7 +18,8 @@ The goal is that a new session should be able to re-enter the work in under 10 m
 - Current phase: **M3 in progress**
 - Current milestone: **M3 - Planner Domain Port Complete**
 - Current completed slice: **M3 slice 10 - guarded internal planner default-on rollout with explicit rollback**
-- Current recommended slice: **M3 slice 11 - validate default-on guarded planner behavior under deployed public-host topology and confirm rollback smoke**
+- Current active slice: **M3 slice 11 - forwarded public-host normalization for guarded planner authorization (local implementation landed, external smoke pending)**
+- Current recommended next action: **Run real public-origin default-on and rollback smoke in deployment, then record M3 slice 11 as complete**
 
 ## Completed Slice
 
@@ -84,7 +85,8 @@ Continue porting planner-side business logic to C# under tests before any produc
 12. Keep the internal planner hardening stable: no shell-configurable internal planner URL, no `graph` in the internal route response, opt-in debug only, and generic internal validation errors.
 13. Keep the new browser/frontend regression suite stable: guarded share activation, visualization-backed guarded rendering/layout, and guarded no-result debug/internal-route behavior should remain green in committed tests.
 14. Keep the new internal planner access hardening stable: `/_internal/planner/calculate` now requires same-origin requests and remains separate from `/v2/*` compatibility contracts.
-15. Treat public-host topology validation as the new post-10 gate: the internal route is hardened and guarded mode is now default-on in-repo, but deployed same-origin behavior still requires an explicit proxy/topology smoke and rollback confirmation before broader rollout confidence.
+15. Keep the new forwarded public-host normalization stable: the host now consumes forwarded public scheme/host before guarded same-origin enforcement, while mismatch rejection and explicit rollback must remain intact.
+16. Do not mark M3 slice 11 complete until the deployed public-origin guarded-path smoke and rollback confirmation are both recorded.
 
 #### Do Not Start Yet
 1. Do not start the Blazor planner UI route during planner-domain porting.
