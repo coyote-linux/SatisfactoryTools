@@ -58,7 +58,7 @@
 - Deployment must overwrite or sanitize `X-Forwarded-Proto` and `X-Forwarded-Host` and restrict accepted public hostnames before the host-side same-origin check can be trusted in production.
 
 ## Exact Next Step
-- Complete M3 slice 11 by recording the deployed public-origin default-on smoke and rollback confirmation, then update continuity docs to mark the slice complete.
+- Complete M3 slice 11 by following `.sisyphus/context/dotnet-migration-runbook-m3-slice11-public-origin-smoke.md`, recording the deployed public-origin default-on smoke and rollback confirmation, then updating continuity docs to mark the slice complete.
 
 ## Resume Notes For The Next Session
 1. Read `.sisyphus/plans/dotnet-migration-plan.md`
@@ -67,4 +67,5 @@
 4. Read `.sisyphus/context/dotnet-migration-decision-log.md`
 5. Read `.sisyphus/context/dotnet-migration-planner-fixtures.md`
 6. Read `.sisyphus/context/dotnet-migration-handoff-2026-04-16-m3-slice11-forwarded-public-host-local-validation.md`
-7. Run and record the deployed public-origin default-on and rollback smokes before calling M3 slice 11 complete.
+7. Read `.sisyphus/context/dotnet-migration-runbook-m3-slice11-public-origin-smoke.md`
+8. Run and record the deployed public-origin default-on and rollback smokes before calling M3 slice 11 complete.
