@@ -1,25 +1,51 @@
-// Superhero 4.5.0
-// Bootswatch
+@use "sass:color";
 
+// Amber Foundry
+// Bootswatch Overrides
 
 // Variables ===================================================================
-
-$web-font-path: "https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" !default;
-@import url($web-font-path);
 
 // Navbar ======================================================================
 
 .navbar {
 	font-size: $font-size-sm;
+	background-color: #000;
+	border-bottom: 2px solid $primary;
+	box-shadow: 0 2px 10px rgba(255, 140, 0, 0.4);
 }
 
 // Buttons =====================================================================
 
 .btn {
+	font-family: $font-family-sans-serif;
+	font-weight: bold;
+	text-transform: uppercase;
+	border-radius: 2px;
+	transition: all 0.2s;
+
 	@each $color, $value in $theme-colors {
 		&-#{$color} {
-			@if $enable-gradients {
-				background: $value linear-gradient(180deg, mix($white, $value, 15%), $value) repeat-x;
+			@if $color == 'primary' {
+				background-color: $value;
+				color: #000;
+				border: none;
+				box-shadow: 0 0 10px rgba(255, 140, 0, 0.4);
+
+				&:hover {
+					background-color: color.adjust($value, $lightness: 10%, $space: hsl);
+					box-shadow: 0 0 15px rgba(255, 140, 0, 0.4);
+					color: #000;
+				}
+			} @else if $color == 'secondary' {
+				background-color: transparent;
+				color: $body-color;
+				border: 1px solid $gray-400;
+
+				&:hover {
+					border-color: $primary;
+					color: $primary;
+					background-color: transparent;
+				}
 			} @else {
 				background-color: $value;
 			}
@@ -27,11 +53,24 @@ $web-font-path: "https://fonts.googleapis.com/css?family=Lato:300,400,700&displa
 	}
 }
 
+.btn-outline-light {
+	color: $gray-100;
+	border-color: $gray-400;
+
+	&:hover,
+	&:focus {
+		background-color: $primary;
+		border-color: $primary;
+		color: #000;
+		box-shadow: 0 0 10px rgba(255, 140, 0, 0.4);
+	}
+}
+
 // Typography ==================================================================
 
 .dropdown-menu {
-
 	font-size: $font-size-sm;
+	border: 1px solid $gray-400;
 }
 
 .dropdown-header {
@@ -52,8 +91,11 @@ $web-font-path: "https://fonts.googleapis.com/css?family=Lato:300,400,700&displa
 	}
 
 	a:not(.btn) {
-		color: #fff;
-		text-decoration: underline;
+		color: $primary;
+		text-decoration: none;
+		&:hover {
+			text-decoration: underline;
+		}
 	}
 
 	.dropdown-menu a {
@@ -126,49 +168,49 @@ $web-font-path: "https://fonts.googleapis.com/css?family=Lato:300,400,700&displa
 
 		.table-primary:hover {
 			&, > th, > td {
-				background-color: darken($primary, 5%);
+				background-color: color.adjust($primary, $lightness: -5%, $space: hsl);
 			}
 		}
 
 		.table-secondary:hover {
 			&, > th, > td {
-				background-color: darken($secondary, 5%);
+				background-color: color.adjust($secondary, $lightness: -5%, $space: hsl);
 			}
 		}
 
 		.table-light:hover {
 			&, > th, > td {
-				background-color: darken($light, 5%);
+				background-color: color.adjust($light, $lightness: -5%, $space: hsl);
 			}
 		}
 
 		.table-dark:hover {
 			&, > th, > td {
-				background-color: darken($dark, 5%);
+				background-color: color.adjust($dark, $lightness: -5%, $space: hsl);
 			}
 		}
 
 		.table-success:hover {
 			&, > th, > td {
-				background-color: darken($success, 5%);
+				background-color: color.adjust($success, $lightness: -5%, $space: hsl);
 			}
 		}
 
 		.table-info:hover {
 			&, > th, > td {
-				background-color: darken($info, 5%);
+				background-color: color.adjust($info, $lightness: -5%, $space: hsl);
 			}
 		}
 
 		.table-danger:hover {
 			&, > th, > td {
-				background-color: darken($danger, 5%);
+				background-color: color.adjust($danger, $lightness: -5%, $space: hsl);
 			}
 		}
 
 		.table-warning:hover {
 			&, > th, > td {
-				background-color: darken($warning, 5%);
+				background-color: color.adjust($warning, $lightness: -5%, $space: hsl);
 			}
 		}
 
@@ -188,6 +230,22 @@ label,
 .checkbox label,
 .help-block {
 	font-size: $font-size-sm;
+}
+
+.form-control {
+	background-color: $gray-900;
+	border: 1px solid $gray-400;
+	color: $primary;
+	font-family: monospace;
+	font-weight: bold;
+
+	&:focus {
+		outline: none;
+		border-color: $primary;
+		box-shadow: 0 0 5px rgba(255, 140, 0, 0.4);
+		background-color: $gray-900;
+		color: $primary;
+	}
 }
 
 // Navs ========================================================================
@@ -224,11 +282,7 @@ label,
 
 	@each $color, $value in $theme-colors {
 		&-#{$color} {
-			@if $enable-gradients {
-				background: $value linear-gradient(180deg, mix($white, $value, 15%), $value) repeat-x;
-			} @else {
-				background-color: $value;
-			}
+			background-color: $value;
 		}
 	}
 }

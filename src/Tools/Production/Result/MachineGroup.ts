@@ -31,10 +31,11 @@ export class MachineGroup
 		this.machines = [];
 
 		switch (this.mode) {
-			case 'roundUp':
+			case 'roundUp': {
 				this.machines.push(this.getMachineData(Math.ceil(this.recipeData.amount * 100 / this.recipeData.clockSpeed), this.recipeData.clockSpeed));
 				break;
-			case 'underclockLast':
+			}
+			case 'underclockLast': {
 				const amount = Math.floor(this.recipeData.amount * 100 / this.recipeData.clockSpeed);
 				if (amount > 0) {
 					this.machines.push(this.getMachineData(amount, this.recipeData.clockSpeed));
@@ -45,7 +46,8 @@ export class MachineGroup
 					this.machines.push(this.getMachineData(1, Numbers.ceil(rest * this.recipeData.clockSpeed, 4)));
 				}
 				break;
-			case 'underclockEqually':
+			}
+			case 'underclockEqually': {
 				const count = Math.ceil(this.recipeData.amount * 100 / this.recipeData.clockSpeed);
 				const eachExact = this.recipeData.amount * 100 / count;
 				const each = Numbers.floor(eachExact, 4);
@@ -63,6 +65,7 @@ export class MachineGroup
 					this.machines.push(this.getMachineData(count - boostedMachines, each));
 				}
 				break;
+			}
 		}
 
 		this.power = this.sumPower();
@@ -90,11 +93,11 @@ export class MachineGroup
 		let max = 0;
 		let isVariable = false;
 
-		power += machine.amount * (this.recipeData.machine.metadata.powerConsumption * Math.pow(machine.clockSpeed / 100, this.recipeData.machine.metadata.powerConsumptionExponent));
+		power += machine.amount * (this.recipeData.machine.metadata.powerConsumption * Math.pow(machine.clockSpeed / 100, this.recipeData.machine.metadata.powerConsumptionExponent)) * this.recipeData.powerConsumptionMultiplier;
 
 		if (this.recipeData.recipe.isVariablePower) {
-			max = machine.amount * this.recipeData.recipe.maxPower * Math.pow(machine.clockSpeed / 100, this.recipeData.machine.metadata.powerConsumptionExponent);
-			const min = machine.amount * this.recipeData.recipe.minPower * Math.pow(machine.clockSpeed / 100, this.recipeData.machine.metadata.powerConsumptionExponent);
+			max = machine.amount * this.recipeData.recipe.maxPower * Math.pow(machine.clockSpeed / 100, this.recipeData.machine.metadata.powerConsumptionExponent) * this.recipeData.powerConsumptionMultiplier;
+			const min = machine.amount * this.recipeData.recipe.minPower * Math.pow(machine.clockSpeed / 100, this.recipeData.machine.metadata.powerConsumptionExponent) * this.recipeData.powerConsumptionMultiplier;
 			power = (max + min) / 2;
 			isVariable = true;
 		}

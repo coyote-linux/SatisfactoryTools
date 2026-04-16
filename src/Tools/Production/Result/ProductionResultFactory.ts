@@ -16,10 +16,10 @@ export class ProductionResultFactory
 
 	public create(request: IProductionDataApiRequest, response: IProductionDataApiResponse, data: IJsonSchema): ProductionResult
 	{
-		return new ProductionResult(request, ProductionResultFactory.createGraph(response, data), data);
+		return new ProductionResult(request, ProductionResultFactory.createGraph(request, response, data), data);
 	}
 
-	private static createGraph(response: IProductionDataApiResponse, data: IJsonSchema): Graph
+	private static createGraph(request: IProductionDataApiRequest, response: IProductionDataApiResponse, data: IJsonSchema): Graph
 	{
 		const graph = new Graph;
 
@@ -28,10 +28,10 @@ export class ProductionResultFactory
 				continue;
 			}
 
-			let machineData;
-			let machineClass;
-			let recipeClass;
-			let clockSpeed;
+			let machineData: string;
+			let machineClass: string;
+			let recipeClass: string;
+			let clockSpeed: string;
 			const amount = parseFloat(response[recipeData] + '');
 
 			[machineData, machineClass] = recipeData.split('#');
@@ -78,6 +78,8 @@ export class ProductionResultFactory
 						data.recipes[recipeClass],
 						amount,
 						parseInt(clockSpeed, 10),
+						request.powerConsumptionMultiplier || 1,
+						request.recipeCostMultiplier || 1,
 					), data));
 				}
 			}

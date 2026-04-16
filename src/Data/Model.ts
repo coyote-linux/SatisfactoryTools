@@ -83,8 +83,30 @@ export class Model
 
 	public getInputableItems(): IItemSchema[]
 	{
-		return this.getAutomatableItems(true).filter((item) => {
-			return !(item.className in this.data.resources) || item.className === Constants.NUCLEAR_WASTE_CLASSNAME || item.className === Constants.PLUTONIUM_WASTE_CLASSNAME;
+		const items: {[key: string]: Item} = {};
+		const addItem = (item: Item) => {
+			const className = item.prototype.className;
+			if (!(className in this.data.resources) || className === Constants.NUCLEAR_WASTE_CLASSNAME || className === Constants.PLUTONIUM_WASTE_CLASSNAME) {
+				items[className] = item;
+			}
+		};
+
+		for (const item of this.getAutomatableItems(true)) {
+			addItem(this.getItem(item.className));
+		}
+
+		for (const k in this.recipes) {
+			if (this.recipes.hasOwnProperty(k)) {
+				for (const ingredient of this.recipes[k].ingredients) {
+					addItem(ingredient.item);
+				}
+			}
+		}
+
+		return Object.values(items).sort((item1: Item, item2: Item) => {
+			return item1.prototype.name.localeCompare(item2.prototype.name);
+		}).map((item: Item) => {
+			return item.prototype;
 		});
 	}
 

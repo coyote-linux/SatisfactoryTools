@@ -130,6 +130,12 @@
 				</span>
 			</span>
 
+			<label class="btn btn-outline-light mb-0 mr-2 d-flex align-items-center" tooltip title="Show solver diagnostics when a plan cannot be generated.">
+				<input type="checkbox" ng-model="ctrl.tab.state.showDebugOutput" class="mr-2">
+				<span class="fas fa-bug mr-1"></span>
+				<span>Debug</span>
+			</label>
+
 			<span class="btn-group">
 				<a class="btn btn-info" ng-click="ctrl.tab.copyShareLink()" tooltip title="Share tab">
 					<span class="fas fa-share-alt"></span>
@@ -202,6 +208,23 @@
 					<p>
 						Select items that you want to produce. You can choose between item per minute (will produce given amount from as low amount of raw resources as possible) or maximize (will produce as much as possible, given the raw resource limits).
 					</p>
+
+					<div class="row mb-3" ng-if="$root.version === '1.2'">
+						<div class="col-lg-6">
+						<label for="recipe-cost-multiplier"><b>Recipe Parts Cost Multiplier</b></label>
+						<select id="recipe-cost-multiplier" class="form-control" ng-model="ctrl.tab.data.request.recipeCostMultiplier" ng-options="option.value as option.label for option in ctrl.recipeCostMultiplierOptions"></select>
+						<small class="form-text text-muted">
+							Multiplies non-Packager recipe ingredient costs for 1.2 calculations without changing recipe outputs.
+						</small>
+					</div>
+						<div class="col-lg-6">
+							<label for="power-consumption-multiplier"><b>Power Consumption Multiplier</b></label>
+							<select id="power-consumption-multiplier" class="form-control" ng-model="ctrl.tab.data.request.powerConsumptionMultiplier" ng-options="option.value as option.label for option in ctrl.powerConsumptionMultiplierOptions"></select>
+							<small class="form-text text-muted">
+								Applies a global multiplier to the displayed machine power usage for 1.2 calculations.
+							</small>
+						</div>
+					</div>
 
 					<table class="production-input-table">
 						<tbody ui-sortable="{axis: 'y',  'ui-floating': true, handle: '> .sortable-handler'}" ng-model="ctrl.tab.data.request.production">
@@ -321,9 +344,9 @@
 									</span>
 								</h3>
 								<div class="card-body">
-									<p>
-										Select items that you already have at your disposal and therefore don't need to be produced by this factory.
-									</p>
+								<p>
+									Select items that you already have at your disposal and therefore don't need to be produced by this factory. This also covers manually supplied ingredients such as Leaves, Wood, Mycelia, and Alien Protein.
+								</p>
 									<table class="input-table">
 										<tbody ui-sortable="{axis: 'y',  'ui-floating': true, handle: '> .sortable-handler'}" ng-model="ctrl.tab.data.request.input">
 											<tr ng-repeat="product in ctrl.tab.data.request.input track by $index">
@@ -593,6 +616,18 @@
 	<div ng-show="ctrl.tab.resultStatus === 'noResult' && !ctrl.tab.easter" class="visualization-result">
 		Unfortunately we couldn't calculate any result.<br>
 		<span>This can be due to many things: missing resource required for the production line, not enough resources for the requested amount, disabled recipes required for the product, etc.</span><br>
+	</div>
+	<div ng-show="ctrl.tab.resultStatus === 'noResult' && !ctrl.tab.easter && ctrl.tab.state.showDebugOutput && ctrl.tab.hasSolverDebugOutput()" class="visualization-result text-left">
+		<div class="card bg-dark text-light solver-debug-card">
+			<div class="card-header">
+				<span class="fas fa-bug mr-1"></span>
+				Solver debug output
+			</div>
+			<div class="card-body">
+				<p class="mb-3 solver-debug-description">Debug output is enabled for this tab. The payload below shows why the current request could not produce a feasible plan.</p>
+				<pre class="mb-0 solver-debug-output">{{ctrl.tab.getSolverDebugOutput()}}</pre>
+			</div>
+		</div>
 	</div>
 	<div ng-show="ctrl.tab.resultStatus === 'noResult' && ctrl.tab.easter" class="visualization-result">
 		<b title="Click the blue share button to get the share link.">Sharing is caring!</b>

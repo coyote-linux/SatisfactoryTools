@@ -2,15 +2,19 @@
 Satisfactory Tools for planning and building the perfect base.
 
 ## Requirements
-- node.js version 16 (lower may work, 17+ doesn't work)
-- yarn
+- node.js 20+
+- yarn 1.22 (`npx yarn@1.22.22 ...` also works if Yarn is not installed globally)
 - PHP 7.1+
 
 ## Installation
-- `git clone git@github.com:greeny/SatisfactoryTools.git`
+- `git clone git@github.com:coyote-linux/SatisfactoryTools.git`
 - `yarn install`
 - `yarn build`
 - Set up a virtual host pointing to `/www` directory (using e.g. Apache or ngnix)
+- Proxy same-origin `/v2/solver` requests to the local ASP.NET solver service, or inject `SOLVER_URL` in `www/index.php` to point at your deployed solver endpoint.
+- Proxy same-origin `/v2/share` requests to the local ASP.NET service as well, or expose that endpoint directly from the same origin.
+
+The current stack is verified in CI on Node 24 and was smoke-tested locally on Node 22.
 
 ## Contributing
 Any pull requests are welcome, though some rules must be followed:

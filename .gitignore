@@ -1,6 +1,10 @@
 # IDE stuff
 .idea
 .vscode
+.opencode
+.playwright-mcp
+AGENTS.md
+designs/
 
 # Satisfactory Data file for parsing
 data/Docs.json
@@ -16,3 +20,7 @@ yarn-error.log
 
 # Generated sources
 www/assets/app.js
+
+# .NET build outputs
+SolverService/**/bin/
+SolverService/**/obj/

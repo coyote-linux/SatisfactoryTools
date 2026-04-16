@@ -9,6 +9,8 @@ import {Numbers} from '@src/Utils/Numbers';
 
 export class RecipeNode extends GraphNode
 {
+	private static readonly ingredientScaleEpsilon = 1e-8;
+	private static readonly packagerClassName = 'Desc_Packager_C';
 
 	public ingredients: ResourceAmount[] = [];
 	public products: ResourceAmount[] = [];
@@ -19,7 +21,7 @@ export class RecipeNode extends GraphNode
 		super();
 		const multiplier = this.getMultiplier();
 		for (const ingredient of recipeData.recipe.ingredients) {
-			this.ingredients.push(new ResourceAmount(data.items[ingredient.item], ingredient.amount * multiplier, 0));
+			this.ingredients.push(new ResourceAmount(data.items[ingredient.item], this.getScaledIngredientAmount(ingredient.amount, data.items[ingredient.item].liquid) * multiplier, 0));
 		}
 		for (const product of recipeData.recipe.products) {
 			this.products.push(new ResourceAmount(data.items[product.item], product.amount * multiplier, product.amount * multiplier));
@@ -39,7 +41,12 @@ export class RecipeNode extends GraphNode
 
 	public getTitle(): string
 	{
-		return this.formatText(this.recipeData.recipe.name) + '\n' + Strings.formatNumber(this.recipeData.amount) + 'x ' + this.recipeData.machine.name;
+		const machineTitle = Strings.formatNumber(this.recipeData.amount) + 'x ' + this.recipeData.machine.name;
+		if (!this.hasRecipeCostAdjustment()) {
+			return this.formatText(this.recipeData.recipe.name) + '\n' + machineTitle;
+		}
+
+		return this.formatText(this.recipeData.recipe.name) + '\n' + machineTitle + ' · Cost x' + Strings.formatNumber(this.recipeData.recipeCostMultiplier);
 	}
 
 	public getTooltip(): string|null
@@ -48,8 +55,11 @@ export class RecipeNode extends GraphNode
 		for (const machine of this.machineData.machines) {
 			title.push(machine.amount + 'x ' + this.recipeData.machine.name + ' at <b>' + machine.clockSpeed + '%</b> clock speed');
 		}
+		if (this.hasRecipeCostAdjustment()) {
+			title.push('Recipe cost multiplier: <b>x' + Strings.formatNumber(this.recipeData.recipeCostMultiplier) + '</b>');
+			title.push('');
+		}
 
-		title.push('');
 		title.push('Needed power: ' + Numbers.round(this.machineData.power.average) + ' MW');
 		title.push('');
 
@@ -88,6 +98,32 @@ export class RecipeNode extends GraphNode
 	private getMultiplier(): number
 	{
 		return this.recipeData.amount * this.recipeData.machine.metadata.manufacturingSpeed * (this.recipeData.clockSpeed / 100) * (60 / this.recipeData.recipe.time);
+	}
+
+	private getScaledIngredientAmount(amount: number, isLiquid: boolean): number
+	{
+		if (this.recipeData.machine.className === RecipeNode.packagerClassName) {
+			return amount;
+		}
+
+		const scaledAmount = amount * this.recipeData.recipeCostMultiplier;
+		if (isLiquid) {
+			return scaledAmount;
+		}
+		if (scaledAmount <= RecipeNode.ingredientScaleEpsilon) {
+			return 0;
+		}
+
+		return Math.max(1, Math.floor(scaledAmount + 0.5 + RecipeNode.ingredientScaleEpsilon));
+	}
+
+	private hasRecipeCostAdjustment(): boolean
+	{
+		if (this.recipeData.machine.className === RecipeNode.packagerClassName) {
+			return false;
+		}
+
+		return Math.abs(this.recipeData.recipeCostMultiplier - 1) > RecipeNode.ingredientScaleEpsilon;
 	}
 
 }

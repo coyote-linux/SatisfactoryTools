@@ -432,6 +432,7 @@ export class ProductionResult
 				items[className].produced += amount;
 			} else if (edge.from instanceof InputNode) {
 				ProductionResult.addRecipeAmount(items[className].producers, edge.from.itemAmount.item, amount, 'input');
+				items[className].produced += amount;
 			}
 		} else {
 			items[className].produced += amount;

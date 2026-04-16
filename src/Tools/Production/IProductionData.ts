@@ -26,6 +26,8 @@ export interface IProductionDataRequest
 	blockedRecipes: string[]; // whether normal recipe can be used
 	blockedMachines?: string[]; // which machines are blocked
 	allowedAlternateRecipes: string[]; // whether alt is available or not (doesn't guarantee usage)
+	recipeCostMultiplier?: number;
+	powerConsumptionMultiplier?: number;
 
 	sinkableResources: string[]; // whether or not you can sink a given resource
 
@@ -38,6 +40,7 @@ export interface IProductionDataApiRequest extends IProductionDataRequest
 {
 
 	gameVersion: string;
+	debug?: boolean;
 
 }
 
@@ -63,5 +66,40 @@ export interface IProductionDataApiResponse
 {
 
 	[key: string]: number;
+
+}
+
+export interface IProductionDataApiResponseEnvelope
+{
+
+	result?: IProductionDataApiResponse;
+	error?: string;
+	debug?: IProductionDataApiDebug;
+
+}
+
+export interface IProductionDataApiDebug
+{
+
+	status: string;
+	phase?: string;
+	message: string;
+	solverVersion?: string;
+	variableCount?: number;
+	constraintCount?: number;
+	wallTimeMs?: number;
+	iterations?: number;
+	nodes?: number;
+	items?: IProductionDataApiDebugItem[];
+
+}
+
+export interface IProductionDataApiDebugItem
+{
+
+	item: string;
+	name: string;
+	reachable: boolean;
+	reasons: string[];
 
 }

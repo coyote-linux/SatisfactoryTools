@@ -1,3 +1,5 @@
+@use "theme/theme_variables";
+
 .recipe-list {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -39,7 +41,7 @@
 		}
 
 		.recipe-name {
-			color: #eeeeee;
+			color: theme_variables.$gray-100;
 			padding: 0 10px;
 			margin-bottom: 10px;
 
@@ -72,7 +74,7 @@
 	margin: 0;
 	width: 100%;
 	height: 800px;
-	border: 1px solid #4e5d6c;
+	border: 1px solid theme_variables.$gray-400;
 }
 
 .filter-actions {
@@ -90,11 +92,11 @@
 			top: 0;
 			left: -38px;
 			z-index: 1000;
-			color: #b1b1b1;
+			color: theme_variables.$gray-500;
 			padding: 7px 14px;
 			&.has-content{
 				cursor: pointer;
-				color: #000;
+				color: theme_variables.$primary;
 			}
 		}
 	}

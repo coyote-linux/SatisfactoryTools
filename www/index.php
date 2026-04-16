@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<title ng-bind="version === '0.8' ? '[U8] Satisfactory Tools' : '[1.0] Satisfactory Tools'">Satisfactory Tools</title>
+	<title ng-bind="$root.versionLabel ? '[' + $root.versionLabel + '] Satisfactory Tools' : 'Satisfactory Tools'">Satisfactory Tools</title>
 
 	<link rel="apple-touch-icon" sizes="180x180" href="/assets/images/icons/apple-touch-icon.png">
 	<link rel="icon" type="image/png" sizes="32x32" href="/assets/images/icons/favicon-32x32.png">
@@ -14,23 +14,23 @@
 	<meta name="msapplication-TileColor" content="#da532c">
 	<meta name="msapplication-config" content="/assets/images/icons/browserconfig.xml">
 	<!-- Primary Meta Tags -->
-	<meta name="theme-color" content="#df691a">
+	<meta name="theme-color" content="#ff8c00">
 	<meta name="title" content="Satisfactory Tools" />
 	<meta name="type" content="website" />
-	<meta name="image" content="https://www.satisfactorytools.com/assets/images/icons/android-chrome-512x512.png" />
-	<meta name="description" content="A collection of powerful tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics and share your builds with others!" />
+	<meta name="image" content="https://ficsit.spugnort.com/assets/images/icons/android-chrome-512x512.png" />
+	<meta name="description" content="A modified fork of Satisfactory Tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics, and track updates from the public fork at ficsit.spugnort.com." />
 	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content="website">
-	<meta property="og:url" content="https://www.satisfactorytools.com/">
+	<meta property="og:url" content="https://ficsit.spugnort.com/">
 	<meta property="og:title" content="Satisfactory Tools">
-	<meta property="og:description" content="A collection of powerful tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics and share your builds with others!">
-	<meta property="og:image" content="https://www.satisfactorytools.com/assets/images/icons/android-chrome-512x512.png">
+	<meta property="og:description" content="A modified fork of Satisfactory Tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics, and track updates from the public fork at ficsit.spugnort.com.">
+	<meta property="og:image" content="https://ficsit.spugnort.com/assets/images/icons/android-chrome-512x512.png">
 	<!-- Twitter -->
 	<meta property="twitter:card" content="summary">
-	<meta property="twitter:url" content="https://www.satisfactorytools.com/">
+	<meta property="twitter:url" content="https://ficsit.spugnort.com/">
 	<meta property="twitter:title" content="Satisfactory Tools">
-	<meta property="twitter:description" content="A collection of powerful tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics and share your builds with others!">
-	<meta property="twitter:image" content="https://www.satisfactorytools.com/assets/images/icons/android-chrome-512x512.png">
+	<meta property="twitter:description" content="A modified fork of Satisfactory Tools for planning and building the perfect base. Calculate your production or consumption, browse items, buildings, and schematics, and track updates from the public fork at ficsit.spugnort.com.">
+	<meta property="twitter:image" content="https://ficsit.spugnort.com/assets/images/icons/android-chrome-512x512.png">
 
 	<style>
 		[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
@@ -40,13 +40,13 @@
 		/* for faster loading */
 		body {
 			margin: 0;
-			font-family: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+			font-family: system-ui, -apple-system, sans-serif;
 			font-size: 1rem;
 			font-weight: 400;
 			line-height: 1.5;
-			color: #EBEBEB;
+			color: #e0e0e0;
 			text-align: left;
-			background-color: #2B3E50;
+			background-color: #0d0d0d;
 		}
 
 		.fullscreen-loader {
@@ -56,7 +56,7 @@
 			right: 0;
 			bottom: 0;
 			display: flex;
-			background-color: #2B3E50;
+			background-color: #0d0d0d;
 
 			align-items: center;
 			justify-content: center;
@@ -91,11 +91,13 @@
 
 		.fullscreen-loader .loader {
 			font-size: 50px;
+			color: #ff8c00;
 		}
 
 		.fullscreen-loader .loader-text, .fullscreen-loader .loader-text span {
 			margin-top: 20px;
 			font-size: 32px;
+			color: #ff8c00;
 		}
 	</style>
 	<link rel="stylesheet" href="/assets/css/fontawesome.min.css">
@@ -120,19 +122,11 @@
 	</div>
 </div>
 
-<script src="/assets/app.js?v=<?= filemtime(__DIR__ . '/assets/app.js') ?>" async></script>
-<script type="text/javascript">
-	var _paq = window._paq || [];
-	_paq.push(["setDoNotTrack", true]);
-	_paq.push(['trackPageView']);
-	_paq.push(['enableLinkTracking']);
-	(function() {
-		var u="//analytics.greeny.dev/";
-		_paq.push(['setTrackerUrl', u+'matomo.php']);
-		_paq.push(['setSiteId', '4']);
-		var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-		g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
-	})();
-</script>
+	<script>
+		window.SATISFACTORY_TOOLS_CONFIG = {
+			solverUrl: <?= json_encode(getenv('SOLVER_URL') ?: '/v2/solver') ?>
+		};
+	</script>
+	<script src="/assets/app.js?v=<?= filemtime(__DIR__ . '/assets/app.js') ?>" async></script>
 </body>
 </html>
